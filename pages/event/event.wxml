@@ -7,12 +7,6 @@
     <button class="icon-button" bindtap="goSettings">•••</button>
   </view>
 
-  <view class="soft-card intro-card fade-up">
-    <text class="section-label">Origin Event</text>
-    <text class="narrative-title">生活半径里的轻微异常</text>
-    <text class="narrative-body intro-copy">起点事件不需要宏大，只需要撬动她的惯性、欲望或恐惧。</text>
-  </view>
-
   <view class="event-card fade-up">
     <text class="event-text">{{event.text}}</text>
     <view class="event-note">

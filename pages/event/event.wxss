@@ -2,18 +2,8 @@
   padding-bottom: 160rpx;
 }
 
-.intro-card {
-  display: flex;
-  flex-direction: column;
-  gap: 24rpx;
-}
-
-.intro-copy {
-  color: #444844;
-}
-
 .event-card {
-  margin-top: 48rpx;
+  margin-top: 24rpx;
   padding: 48rpx;
   position: relative;
   z-index: 1;
