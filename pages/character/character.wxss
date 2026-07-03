@@ -1,5 +1,15 @@
 .character-screen {
+  padding-top: calc(env(safe-area-inset-top) + 188rpx);
   padding-bottom: 260rpx;
+}
+
+.character-app-bar {
+  min-height: 136rpx;
+  padding-top: calc(env(safe-area-inset-top) + 34rpx);
+}
+
+.character-nav-spacer {
+  flex: 1;
 }
 
 .character-card {

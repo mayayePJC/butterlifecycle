@@ -1,9 +1,9 @@
 <view class="screen character-screen">
   <view class="paper-grain"></view>
 
-  <view class="app-bar">
+  <view class="app-bar character-app-bar">
     <button class="icon-button" bindtap="clearStory">×</button>
-    <text class="app-title">蝴蝶人生 — 遇见最初的她</text>
+    <text class="character-nav-spacer"></text>
     <button class="icon-button" bindtap="goSettings">•••</button>
   </view>
 
