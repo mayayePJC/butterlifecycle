@@ -1,0 +1,208 @@
+.retrospect-screen {
+  padding-bottom: 260rpx;
+}
+
+.retrospect-head {
+  text-align: center;
+}
+
+.retrospect-head .narrative-title {
+  display: block;
+  margin-top: 28rpx;
+}
+
+.loading-card {
+  margin-top: 72rpx;
+  padding: 40rpx;
+  border: 1rpx solid rgba(105, 93, 74, 0.22);
+  background: rgba(246, 243, 236, 0.48);
+}
+
+.quote-wrap {
+  margin-top: 72rpx;
+  position: relative;
+  padding: 0 28rpx;
+  text-align: center;
+}
+
+.quote-mark {
+  position: absolute;
+  color: rgba(196, 199, 194, 0.45);
+  font-size: 88rpx;
+  line-height: 1;
+}
+
+.quote-mark.left {
+  left: -4rpx;
+  top: -28rpx;
+}
+
+.quote-mark.right {
+  right: -4rpx;
+  bottom: -46rpx;
+}
+
+.quote-text {
+  color: #1c1c18;
+  font-size: 32rpx;
+  line-height: 58rpx;
+  font-style: italic;
+}
+
+.change-grid {
+  margin-top: 88rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 34rpx;
+}
+
+.change-card {
+  min-height: 188rpx;
+  padding: 44rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(196, 199, 194, 0.28);
+  background: rgba(246, 243, 236, 0.55);
+}
+
+.change-label {
+  display: block;
+  margin-bottom: 26rpx;
+  font-family: Arial, sans-serif;
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+}
+
+.change-label.lost {
+  color: rgba(107, 45, 45, 0.58);
+}
+
+.change-label.gained {
+  color: #4a5d50;
+}
+
+.change-copy {
+  color: #181f19;
+  font-size: 32rpx;
+  line-height: 48rpx;
+}
+
+.small-line {
+  width: 84rpx;
+  height: 1rpx;
+  margin-top: 28rpx;
+}
+
+.lost-line {
+  background: rgba(107, 45, 45, 0.28);
+}
+
+.gained-line {
+  background: rgba(74, 93, 80, 0.28);
+}
+
+.strong-card {
+  min-height: 190rpx;
+  padding: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 12rpx;
+  color: #f4f1ea;
+  background: #2d342e;
+}
+
+.strong-label {
+  display: block;
+  margin-bottom: 18rpx;
+  color: rgba(193, 200, 192, 0.72);
+  font-family: Arial, sans-serif;
+  font-size: 24rpx;
+}
+
+.strong-name {
+  font-size: 38rpx;
+  line-height: 50rpx;
+}
+
+.bars {
+  height: 92rpx;
+  display: flex;
+  align-items: flex-end;
+  gap: 10rpx;
+}
+
+.bar {
+  width: 12rpx;
+  border-radius: 999rpx;
+  background: rgba(140, 126, 106, 0.75);
+}
+
+.bar.one {
+  height: 46rpx;
+}
+
+.bar.two {
+  height: 68rpx;
+}
+
+.bar.three {
+  height: 88rpx;
+}
+
+.key-choice {
+  margin-top: 88rpx;
+  padding: 8rpx 0 8rpx 34rpx;
+  border-left: 1rpx solid rgba(140, 126, 106, 0.36);
+}
+
+.key-title {
+  display: block;
+  margin-bottom: 34rpx;
+  color: #8c7e6a;
+  font-family: Arial, sans-serif;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.key-copy {
+  display: block;
+  color: #181f19;
+  font-size: 32rpx;
+  line-height: 56rpx;
+}
+
+.key-choice .chip-row {
+  margin: 30rpx 0;
+}
+
+.old-self {
+  display: block;
+  color: rgba(68, 72, 68, 0.76);
+  font-family: Arial, sans-serif;
+  font-size: 24rpx;
+  line-height: 38rpx;
+}
+
+.action-row {
+  position: fixed;
+  left: 64rpx;
+  right: 64rpx;
+  bottom: calc(144rpx + env(safe-area-inset-bottom));
+  z-index: 35;
+  display: flex;
+  gap: 18rpx;
+}
+
+.action-row .primary-button {
+  flex: 1;
+}
+
+.share-button {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 8rpx;
+  border: 1rpx solid #747873;
+  color: #181f19;
+  background: rgba(252, 249, 242, 0.85);
+  font-size: 42rpx;
+}

@@ -1,0 +1,34 @@
+<view class="screen event-screen">
+  <view class="paper-grain"></view>
+
+  <view class="app-bar">
+    <button class="icon-button" bindtap="back">‹</button>
+    <text class="app-title">给她一天里的一件小事</text>
+    <button class="icon-button" bindtap="goSettings">•••</button>
+  </view>
+
+  <view class="soft-card intro-card fade-up">
+    <text class="section-label">Origin Event</text>
+    <text class="narrative-title">生活半径里的轻微异常</text>
+    <text class="narrative-body intro-copy">起点事件不需要宏大，只需要撬动她的惯性、欲望或恐惧。</text>
+  </view>
+
+  <view class="event-card fade-up">
+    <text class="event-text">{{event.text}}</text>
+    <view class="event-note">
+      <text>“{{event.innerReaction}}”</text>
+    </view>
+    <text class="pressure">{{event.pressure}}</text>
+  </view>
+
+  <view class="custom-event">
+    <text class="section-label">Custom Event</text>
+    <textarea class="textarea-field" value="{{customText}}" maxlength="180" placeholder="或者，写下她今天遇到的一件小事..." bindinput="onCustomInput"></textarea>
+  </view>
+
+  <view class="action-stack">
+    <button class="ghost-button" bindtap="nextEvent">⟳ 换一个事件</button>
+    <button class="ghost-button" bindtap="useCustom">使用自定义事件</button>
+    <button class="primary-button" bindtap="startStory">让她活下去 →</button>
+  </view>
+</view>

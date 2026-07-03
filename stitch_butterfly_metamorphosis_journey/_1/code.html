@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>蝴蝶人生 - 角色选择</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#c4c7c2",
+                    "blood-ox": "#6B2D2D",
+                    "secondary": "#695d4a",
+                    "tertiary-fixed": "#d2e8d7",
+                    "on-secondary-fixed-variant": "#504534",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed": "#231a0c",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#414942",
+                    "primary-container": "#2d342e",
+                    "moss-dim": "#4A5D50",
+                    "tertiary-fixed-dim": "#b7ccbc",
+                    "inverse-on-surface": "#f3f0e9",
+                    "surface-container-low": "#f6f3ec",
+                    "withered-gold": "#8C7E6A",
+                    "on-tertiary-fixed-variant": "#384b3f",
+                    "on-surface-variant": "#444844",
+                    "primary": "#181f19",
+                    "on-tertiary-fixed": "#0d1f15",
+                    "tertiary-container": "#24362b",
+                    "on-background": "#1c1c18",
+                    "background": "#fcf9f2",
+                    "surface-container-high": "#ebe8e1",
+                    "primary-fixed-dim": "#c1c8c0",
+                    "surface-container-highest": "#e5e2db",
+                    "parchment": "#F4F1EA",
+                    "surface-dim": "#dcdad3",
+                    "surface-bright": "#fcf9f2",
+                    "secondary-container": "#f2e0c8",
+                    "ink-black": "#1A1C1A",
+                    "on-primary-container": "#959c94",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary": "#0f2116",
+                    "secondary-fixed-dim": "#d5c4ad",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e5e2db",
+                    "inverse-primary": "#c1c8c0",
+                    "surface-tint": "#596059",
+                    "on-surface": "#1c1c18",
+                    "on-secondary-container": "#6f6350",
+                    "shadow-gray": "#D1CEC7",
+                    "secondary-fixed": "#f2e0c8",
+                    "on-primary-fixed": "#161d18",
+                    "on-primary": "#ffffff",
+                    "outline": "#747873",
+                    "inverse-surface": "#31312c",
+                    "surface-container": "#f1eee7",
+                    "on-tertiary-container": "#8b9f90",
+                    "surface": "#fcf9f2",
+                    "primary-fixed": "#dde4db"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "element-gap": "1rem",
+                    "section-gap": "3rem",
+                    "line-length-max": "65ch",
+                    "page-margin": "2rem",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "ui-label-sm": ["Work Sans"],
+                    "narrative-body-mobile": ["\"Source Serif 4\""],
+                    "narrative-body": ["\"Source Serif 4\""],
+                    "ui-label-lg": ["Work Sans"],
+                    "status-number": ["Work Sans"],
+                    "narrative-title": ["Noto Serif SC"],
+                    "inner-monologue": ["\"Source Serif 4\""]
+            },
+            "fontSize": {
+                    "ui-label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "narrative-body-mobile": ["17px", {"lineHeight": "30px", "fontWeight": "400"}],
+                    "narrative-body": ["18px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "ui-label-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "status-number": ["20px", {"lineHeight": "24px", "fontWeight": "300"}],
+                    "narrative-title": ["28px", {"lineHeight": "40px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "inner-monologue": ["16px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #fcf9f2;
+            color: #181f19;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .grain-texture {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.03;
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+        }
+
+        .ink-fade-in {
+            animation: inkFade 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes inkFade {
+            from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        .hover-lift {
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(45, 52, 46, 0.08);
+        }
+
+        .chinese-vertical {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+
+        .watercolor-bg {
+            background: radial-gradient(circle at 50% 50%, rgba(242, 224, 200, 0.3) 0%, rgba(252, 249, 242, 0) 70%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-narrative-body text-narrative-body min-h-screen flex flex-col">
+<div class="grain-texture"></div>
+<!-- Top AppBar (from Shared Components) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center h-16 px-page-margin bg-transparent">
+<div class="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity active:scale-95 duration-300">
+<span class="material-symbols-outlined text-primary">close</span>
+</div>
+<h1 class="font-narrative-title text-narrative-title text-primary tracking-widest text-lg md:text-2xl">
+            蝴蝶人生 — <span class="font-light opacity-80">遇见最初的她</span>
+</h1>
+<div class="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity active:scale-95 duration-300">
+<span class="material-symbols-outlined text-primary">more_horiz</span>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center pt-24 pb-32 px-page-margin max-w-screen-xl mx-auto w-full relative">
+<!-- Atmospheric Background Element -->
+<div class="absolute inset-0 pointer-events-none flex items-center justify-center opacity-40">
+
+</div>
+<!-- Narrative Identity Card -->
+<div class="ink-fade-in w-full max-w-line-length-max bg-white/40 backdrop-blur-sm rounded-xl p-8 md:p-12 shadow-[0_10px_30px_rgba(45,52,46,0.03)] border border-white/20 relative overflow-hidden group hover-lift">
+<!-- Decorative "Stamp" -->
+<div class="absolute top-8 right-8 chinese-vertical text-withered-gold opacity-30 font-narrative-title text-sm tracking-[0.5em] pointer-events-none">
+                岁·月·沉·淀
+            </div>
+<!-- Identity Header -->
+<div class="mb-10 text-center md:text-left">
+<div class="flex flex-wrap items-center gap-3 mb-4 justify-center md:justify-start">
+<span class="bg-moss-dim text-parchment px-3 py-1 rounded-full font-ui-label-sm text-ui-label-sm">打工人</span>
+<span class="text-withered-gold italic font-inner-monologue text-inner-monologue">“九点钟的黎明，八点钟的夜”</span>
+</div>
+<h2 class="font-narrative-title text-primary text-3xl md:text-4xl mb-4">唯唯诺诺的局外人</h2>
+<p class="text-on-surface-variant font-narrative-body leading-relaxed max-w-prose">
+                    她是城市缝隙里的影子，在格子间里消磨了所有的棱角。那些没说出口的反驳，最终都化作了深夜里的叹息。
+                </p>
+</div>
+<!-- Character Traits Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+<!-- Inertia / 惯性 -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 text-blood-ox opacity-80">
+<span class="material-symbols-outlined text-sm">history</span>
+<h3 class="font-ui-label-lg text-ui-label-lg uppercase tracking-wider">惯性 Inertia</h3>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="border border-outline-variant px-3 py-1.5 rounded-lg text-on-surface-variant text-sm font-ui-label-sm">讨好</span>
+<span class="border border-outline-variant px-3 py-1.5 rounded-lg text-on-surface-variant text-sm font-ui-label-sm">忍耐</span>
+<span class="border border-outline-variant px-3 py-1.5 rounded-lg text-on-surface-variant text-sm font-ui-label-sm">自责</span>
+</div>
+</div>
+<!-- Desire / 欲望 -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 text-moss-dim opacity-80">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<h3 class="font-ui-label-lg text-ui-label-lg uppercase tracking-wider">欲望 Desire</h3>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-secondary-container/30 text-on-secondary-container px-3 py-1.5 rounded-lg text-sm font-ui-label-sm">自由</span>
+<span class="bg-secondary-container/30 text-on-secondary-container px-3 py-1.5 rounded-lg text-sm font-ui-label-sm">被尊重</span>
+</div>
+</div>
+<!-- Fear / 恐惧 -->
+<div class="space-y-4 md:col-span-2">
+<div class="flex items-center gap-2 text-primary opacity-60">
+<span class="material-symbols-outlined text-sm">visibility_off</span>
+<h3 class="font-ui-label-lg text-ui-label-lg uppercase tracking-wider">恐惧 Shadows</h3>
+</div>
+<div class="flex flex-wrap gap-3">
+<div class="flex items-center gap-2 text-on-surface-variant/80 italic font-inner-monologue">
+<span># 失业的寒冬</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span># 惹麻烦的焦灼</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span># 被讨厌的刺痛</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Profile Image (Small Aesthetic Portrait) -->
+<div class="mt-12 flex justify-center md:justify-end">
+<div class="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-xl relative group">
+<img class="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700" data-alt="A moody, cinematic digital portrait of a weary young woman looking through a rain-streaked window. The lighting is low-key with soft blues and warm amber reflections from city lights. The style is melancholic and painterly, evoking a wabi-sabi aesthetic with subtle textures and muted colors that align with a philosophical narrative game." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQqW0DnO5C9yieTVA1kiVWn7Gbj3VRlos5-bchLG-zmdSBdb5zuZ067JZ429bZR0FfPXfra1rNWg9fiNMBvm-PT3iy4kp-JWVFyCd0cZIArHOvTxtnT6ygcI7SFhJ4usKpyuZ0jPoiGAGWFrqf49HIUdJTZcf0D7zgcV7SIQeg3Kl8KvmGoapcbJxs-CGwTdy9DbxPek4eTtz_DGyb97pmqcfDaULjxdSjkdB70F9rsgxzpyY1Lgn9rw"/>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="mt-section-gap flex flex-col sm:flex-row gap-6 w-full max-w-xs sm:max-w-md ink-fade-in" style="animation-delay: 0.3s">
+<button class="flex-1 px-8 py-4 rounded-full border border-secondary text-primary font-ui-label-lg text-ui-label-lg hover:bg-surface-container-high transition-all active:scale-95 flex items-center justify-center gap-2 group">
+<span class="material-symbols-outlined text-xl group-hover:rotate-180 transition-transform duration-500">refresh</span>
+                换一批
+            </button>
+<button class="flex-1 px-8 py-4 rounded-full bg-primary text-parchment font-ui-label-lg text-ui-label-lg hover:bg-primary-container shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 group">
+                就是她了
+                <span class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+<!-- Secondary Navigation/Help Link -->
+<div class="mt-12 opacity-40 hover:opacity-100 transition-opacity cursor-pointer">
+<span class="text-withered-gold italic text-sm font-inner-monologue border-b border-withered-gold/30 pb-0.5">
+                到此为止，重访过去
+            </span>
+</div>
+</main>
+<!-- Bottom Navigation (from Shared Components) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-page-margin pb-safe backdrop-blur-md bg-surface/80 rounded-t-full shadow-[0_-4px_20px_rgba(45,52,46,0.05)]">
+<a class="flex flex-col items-center justify-center text-primary scale-110 hover:opacity-100 transition-all active:translate-y-[-2px] duration-400 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="font-ui-label-sm text-ui-label-sm mt-1">故事</span>
+</a>
+<a class="flex flex-col items-center justify-center text-moss-dim opacity-60 hover:opacity-100 transition-all active:translate-y-[-2px] duration-400 ease-in-out" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-ui-label-sm text-ui-label-sm mt-1">因果</span>
+</a>
+<a class="flex flex-col items-center justify-center text-moss-dim opacity-60 hover:opacity-100 transition-all active:translate-y-[-2px] duration-400 ease-in-out" href="#">
+<span class="material-symbols-outlined">settings_suggest</span>
+<span class="font-ui-label-sm text-ui-label-sm mt-1">设置</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for the card following the mouse slightly
+        const card = document.querySelector('.ink-fade-in');
+        
+        document.addEventListener('mousemove', (e) => {
+            if (window.innerWidth < 768) return;
+            
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+            
+            card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        document.addEventListener('mouseleave', () => {
+            card.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+
+        // Button feedback
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const originalText = btn.innerHTML;
+                if (btn.innerText.includes('就是她了')) {
+                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span>';
+                    setTimeout(() => {
+                        window.location.reload(); // Simulate transition
+                    }, 1500);
+                }
+            });
+        });
+    </script>
+</body></html>

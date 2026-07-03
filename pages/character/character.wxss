@@ -1,0 +1,126 @@
+.character-screen {
+  padding-bottom: 260rpx;
+}
+
+.character-card {
+  min-height: 980rpx;
+}
+
+.vertical-stamp {
+  position: absolute;
+  top: 56rpx;
+  right: 42rpx;
+  width: 32rpx;
+  color: rgba(140, 126, 106, 0.28);
+  font-size: 24rpx;
+  line-height: 44rpx;
+}
+
+.card-head {
+  margin-bottom: 56rpx;
+  text-align: center;
+}
+
+.tagline {
+  color: #8c7e6a;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  font-style: italic;
+}
+
+.card-title {
+  display: block;
+  margin: 36rpx 0 24rpx;
+}
+
+.summary {
+  display: block;
+  color: #444844;
+}
+
+.trait-section {
+  margin-top: 48rpx;
+}
+
+.trait-title {
+  margin-bottom: 22rpx;
+  font-family: Arial, sans-serif;
+  font-size: 26rpx;
+  line-height: 36rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+}
+
+.trait-title.danger {
+  color: rgba(107, 45, 45, 0.82);
+}
+
+.trait-title.moss {
+  color: rgba(74, 93, 80, 0.82);
+}
+
+.trait-title.muted {
+  color: rgba(68, 72, 68, 0.72);
+}
+
+.shadow-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22rpx;
+  color: rgba(68, 72, 68, 0.82);
+  font-size: 30rpx;
+  line-height: 52rpx;
+  font-style: italic;
+}
+
+.six-self {
+  margin-top: 56rpx;
+  padding-top: 36rpx;
+  border-top: 1rpx solid rgba(196, 199, 194, 0.45);
+}
+
+.self-grid {
+  margin-top: 24rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rpx;
+}
+
+.self-item {
+  width: calc(50% - 9rpx);
+  min-height: 120rpx;
+  padding: 20rpx;
+  border-radius: 8rpx;
+  background: rgba(246, 243, 236, 0.62);
+}
+
+.self-name {
+  display: block;
+  margin-bottom: 8rpx;
+  color: #8c7e6a;
+  font-family: Arial, sans-serif;
+  font-size: 22rpx;
+}
+
+.self-value {
+  color: #444844;
+  font-size: 24rpx;
+  line-height: 36rpx;
+}
+
+.custom-card {
+  margin-top: 48rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.custom-card .textarea-field {
+  margin: 24rpx 0;
+}
+
+.action-stack {
+  margin-top: 64rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+}

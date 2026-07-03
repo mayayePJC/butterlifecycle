@@ -1,0 +1,79 @@
+<view class="screen character-screen">
+  <view class="paper-grain"></view>
+
+  <view class="app-bar">
+    <button class="icon-button" bindtap="clearStory">×</button>
+    <text class="app-title">蝴蝶人生 — 遇见最初的她</text>
+    <button class="icon-button" bindtap="goSettings">•••</button>
+  </view>
+
+  <view class="character-card soft-card fade-up">
+    <view class="vertical-stamp">岁月沉淀</view>
+    <view class="card-head">
+      <view class="chip-row">
+        <text class="chip dark">{{current.identityShort}}</text>
+        <text class="tagline">“{{current.tagline}}”</text>
+      </view>
+      <text class="narrative-title card-title">{{current.title}}</text>
+      <text class="narrative-body summary">{{current.summary}}</text>
+    </view>
+
+    <view class="trait-section">
+      <view class="trait-title danger">↺ 惯性 INERTIA</view>
+      <view class="chip-row">
+        <text wx:for="{{current.inertia}}" wx:key="*this" class="chip line">{{item}}</text>
+      </view>
+    </view>
+
+    <view class="trait-section">
+      <view class="trait-title moss">♡ 欲望 DESIRE</view>
+      <view class="chip-row">
+        <text wx:for="{{current.desires}}" wx:key="*this" class="chip warm">{{item}}</text>
+      </view>
+    </view>
+
+    <view class="trait-section">
+      <view class="trait-title muted">◌ 恐惧 SHADOWS</view>
+      <view class="shadow-row">
+        <text wx:for="{{current.fears}}" wx:key="*this"># {{item}}</text>
+      </view>
+    </view>
+
+    <view class="six-self">
+      <text class="section-label">Six Selves</text>
+      <view class="self-grid">
+        <view wx:for="{{selfList}}" wx:key="name" class="self-item">
+          <text class="self-name">{{item.name}}</text>
+          <text class="self-value">{{item.value}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="custom-card">
+    <text class="section-label">Custom Portrait</text>
+    <textarea class="textarea-field" value="{{customText}}" maxlength="160" placeholder="或者，写下一个普通人的人物画像..." bindinput="onCustomInput"></textarea>
+    <button class="ghost-button" bindtap="useCustom">使用这段画像</button>
+  </view>
+
+  <view class="action-stack fade-up">
+    <button class="ghost-button" bindtap="nextCard">⟳ 换一批</button>
+    <button class="primary-button" bindtap="selectCurrent">就是她了 →</button>
+    <button class="danger-link" bindtap="restoreStory" wx:if="{{hasStory}}">到此为止，重访过去</button>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item active">
+      <text class="nav-icon">□</text>
+      <text>故事</text>
+    </view>
+    <view class="nav-item" bindtap="restoreStory">
+      <text class="nav-icon">▥</text>
+      <text>因果</text>
+    </view>
+    <view class="nav-item" bindtap="goSettings">
+      <text class="nav-icon">⚙</text>
+      <text>设置</text>
+    </view>
+  </view>
+</view>

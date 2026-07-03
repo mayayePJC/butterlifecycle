@@ -1,0 +1,80 @@
+<view class="screen retrospect-screen">
+  <view class="paper-grain"></view>
+
+  <view class="app-bar">
+    <button class="icon-button" bindtap="backStory">‹</button>
+    <text class="app-title">蝴蝶人生</text>
+    <button class="icon-button" bindtap="goSettings">•••</button>
+  </view>
+
+  <view class="retrospect-head fade-up">
+    <text class="section-label">Stage Retrospective</text>
+    <text class="narrative-title">一段人生的切片</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-card">
+    <text class="section-label">Writing</text>
+    <text class="stream-text">{{streamText || "回望正在慢慢显影..."}}</text>
+  </view>
+
+  <block wx:else>
+    <view class="quote-wrap fade-up">
+      <text class="quote-mark left">“</text>
+      <text class="quote-text">{{retrospect.quote}}</text>
+      <text class="quote-mark right">”</text>
+    </view>
+
+    <view class="change-grid fade-up">
+      <view class="change-card">
+        <text class="change-label lost">消失的</text>
+        <text class="change-copy">{{retrospect.lost}}</text>
+        <view class="small-line lost-line"></view>
+      </view>
+      <view class="change-card">
+        <text class="change-label gained">获得的</text>
+        <text class="change-copy">{{retrospect.gained}}</text>
+        <view class="small-line gained-line"></view>
+      </view>
+      <view class="strong-card">
+        <view>
+          <text class="strong-label">变强的自我</text>
+          <text class="strong-name">{{retrospect.strongerSelf}}</text>
+        </view>
+        <view class="bars">
+          <view class="bar one"></view>
+          <view class="bar two"></view>
+          <view class="bar three"></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="key-choice fade-up">
+      <text class="key-title">▧ 最重要的选择</text>
+      <text class="key-copy">{{retrospect.keyChoice}}</text>
+      <view class="chip-row">
+        <text wx:for="{{retrospect.tags}}" wx:key="*this" class="chip warm">{{item}}</text>
+      </view>
+      <text class="old-self">仍在暗处拖她的：{{retrospect.oldSelf}}</text>
+    </view>
+
+    <view class="action-row">
+      <button class="primary-button" bindtap="restart">↻ 再来一段人生</button>
+      <button class="share-button" open-type="share">⌯</button>
+    </view>
+  </block>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="backStory">
+      <text class="nav-icon">□</text>
+      <text>故事</text>
+    </view>
+    <view class="nav-item active">
+      <text class="nav-icon">▥</text>
+      <text>因果</text>
+    </view>
+    <view class="nav-item" bindtap="goSettings">
+      <text class="nav-icon">⚙</text>
+      <text>设置</text>
+    </view>
+  </view>
+</view>

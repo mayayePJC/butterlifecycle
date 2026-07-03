@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&amp;family=Work+Sans:wght@300;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #fcf9f2; /* background from theme */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .grain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stagger-1 { animation-delay: 0.2s; }
+        .stagger-2 { animation-delay: 0.4s; }
+        .stagger-3 { animation-delay: 0.6s; }
+
+        .ink-gradient {
+            background: linear-gradient(180deg, rgba(244, 241, 234, 0) 0%, rgba(235, 232, 225, 0.5) 100%);
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c4c7c2",
+                        "blood-ox": "#6B2D2D",
+                        "secondary": "#695d4a",
+                        "tertiary-fixed": "#d2e8d7",
+                        "on-secondary-fixed-variant": "#504534",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#231a0c",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#414942",
+                        "primary-container": "#2d342e",
+                        "moss-dim": "#4A5D50",
+                        "tertiary-fixed-dim": "#b7ccbc",
+                        "inverse-on-surface": "#f3f0e9",
+                        "surface-container-low": "#f6f3ec",
+                        "withered-gold": "#8C7E6A",
+                        "on-tertiary-fixed-variant": "#384b3f",
+                        "on-surface-variant": "#444844",
+                        "primary": "#181f19",
+                        "on-tertiary-fixed": "#0d1f15",
+                        "tertiary-container": "#24362b",
+                        "on-background": "#1c1c18",
+                        "background": "#fcf9f2",
+                        "surface-container-high": "#ebe8e1",
+                        "primary-fixed-dim": "#c1c8c0",
+                        "surface-container-highest": "#e5e2db",
+                        "parchment": "#F4F1EA",
+                        "surface-dim": "#dcdad3",
+                        "surface-bright": "#fcf9f2",
+                        "secondary-container": "#f2e0c8",
+                        "ink-black": "#1A1C1A",
+                        "on-primary-container": "#959c94",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#0f2116",
+                        "secondary-fixed-dim": "#d5c4ad",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e5e2db",
+                        "inverse-primary": "#c1c8c0",
+                        "surface-tint": "#596059",
+                        "on-surface": "#1c1c18",
+                        "on-secondary-container": "#6f6350",
+                        "shadow-gray": "#D1CEC7",
+                        "secondary-fixed": "#f2e0c8",
+                        "on-primary-fixed": "#161d18",
+                        "on-primary": "#ffffff",
+                        "outline": "#747873",
+                        "inverse-surface": "#31312c",
+                        "surface-container": "#f1eee7",
+                        "on-tertiary-container": "#8b9f90",
+                        "surface": "#fcf9f2",
+                        "primary-fixed": "#dde4db"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "element-gap": "1rem",
+                        "section-gap": "3rem",
+                        "line-length-max": "65ch",
+                        "page-margin": "2rem",
+                        "gutter": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "ui-label-sm": ["Work Sans"],
+                        "narrative-body-mobile": ["\"Source Serif 4\""],
+                        "narrative-body": ["\"Source Serif 4\""],
+                        "ui-label-lg": ["Work Sans"],
+                        "status-number": ["Work Sans"],
+                        "narrative-title": ["Noto Serif SC"],
+                        "inner-monologue": ["\"Source Serif 4\""]
+                    },
+                    "fontSize": {
+                        "ui-label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "narrative-body-mobile": ["17px", {"lineHeight": "30px", "fontWeight": "400"}],
+                        "narrative-body": ["18px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                        "ui-label-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "status-number": ["20px", {"lineHeight": "24px", "fontWeight": "300"}],
+                        "narrative-title": ["28px", {"lineHeight": "40px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "inner-monologue": ["16px", {"lineHeight": "28px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col items-center selection:bg-secondary-container">
+<div class="grain-overlay"></div>
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+<div class="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full bg-secondary/5 blur-[120px]"></div>
+<div class="absolute top-[40%] -right-[15%] w-[60%] h-[60%] rounded-full bg-tertiary-fixed-dim/10 blur-[150px]"></div>
+<div class="absolute bottom-0 left-0 w-full h-[30%] ink-gradient opacity-60"></div>
+</div>
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 flex justify-between items-center w-full px-page-margin h-16 bg-transparent">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined hover:opacity-70 transition-opacity cursor-pointer active:scale-95 duration-300">close</span>
+</div>
+<h1 class="font-narrative-title text-narrative-title text-primary tracking-widest opacity-90">蝴蝶人生</h1>
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined hover:opacity-70 transition-opacity cursor-pointer active:scale-95 duration-300">more_horiz</span>
+</div>
+</header>
+<main class="relative z-10 w-full max-w-[65ch] px-page-margin pt-12 pb-32 flex flex-col gap-section-gap">
+<!-- Headline -->
+<section class="fade-in-up stagger-1 text-center">
+<span class="font-ui-label-sm text-ui-label-sm text-withered-gold uppercase tracking-[0.2em] mb-4 block">Stage Retrospective</span>
+<h2 class="font-narrative-title text-[32px] text-primary leading-tight">一段人生的切片</h2>
+</section>
+<!-- Central Literary Summary -->
+<section class="fade-in-up stagger-2 relative">
+<div class="absolute -left-4 -top-4 text-6xl font-serif text-outline-variant/30 select-none">“</div>
+<p class="font-narrative-body-mobile text-narrative-body-mobile md:text-narrative-body md:font-narrative-body text-on-surface-variant italic leading-relaxed px-4 text-center">
+                她现在更像一个清醒的局外人了。虽然失去了那份安稳的薪水，但她第一次在深夜的冷风中感到了久违的自由。
+            </p>
+<div class="absolute -right-4 -bottom-4 text-6xl font-serif text-outline-variant/30 select-none">”</div>
+</section>
+<!-- Key Changes Bento Grid -->
+<section class="fade-in-up stagger-3 grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Disappeared -->
+<div class="bg-surface-container-low p-8 rounded-xl shadow-[0_20px_40px_rgba(45,52,46,0.03)] border border-outline-variant/10 flex flex-col gap-4">
+<span class="font-ui-label-sm text-ui-label-sm text-blood-ox/60 tracking-widest">消失的</span>
+<p class="font-narrative-body text-primary">那份无条件的隐忍</p>
+<div class="h-[1px] w-12 bg-blood-ox/20"></div>
+</div>
+<!-- Gained -->
+<div class="bg-surface-container-low p-8 rounded-xl shadow-[0_20px_40px_rgba(45,52,46,0.03)] border border-outline-variant/10 flex flex-col gap-4">
+<span class="font-ui-label-sm text-ui-label-sm text-moss-dim tracking-widest">获得的</span>
+<p class="font-narrative-body text-primary">观察世界的第三只眼</p>
+<div class="h-[1px] w-12 bg-moss-dim/20"></div>
+</div>
+<!-- Enhanced Self -->
+<div class="md:col-span-2 bg-primary-container p-8 rounded-xl flex items-center justify-between group overflow-hidden relative">
+<div class="relative z-10">
+<span class="font-ui-label-sm text-ui-label-sm text-on-primary-container/70 tracking-widest mb-2 block">变强的自我</span>
+<p class="font-narrative-title text-parchment">精神自我</p>
+</div>
+<div class="relative z-10 flex gap-1 items-end">
+<div class="w-1.5 h-8 bg-withered-gold/40 rounded-full"></div>
+<div class="w-1.5 h-12 bg-withered-gold/60 rounded-full"></div>
+<div class="w-1.5 h-16 bg-withered-gold rounded-full"></div>
+</div>
+<!-- Subtle artistic flare -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-white/10 transition-colors"></div>
+</div>
+</section>
+<!-- Most Important Choice -->
+<section class="fade-in-up stagger-3 mt-4">
+<div class="p-8 border-l border-withered-gold/30 bg-background/50 backdrop-blur-sm">
+<h3 class="font-ui-label-lg text-ui-label-lg text-withered-gold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">history_edu</span>
+                    最重要的选择
+                </h3>
+<p class="font-narrative-body text-on-surface leading-relaxed">
+                    那天早晨，她没有为了全勤奖而越过那个摔倒的老人。
+                </p>
+<div class="mt-6 flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant font-ui-label-sm text-[10px] rounded-full uppercase tracking-tighter">仁慈</span>
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant font-ui-label-sm text-[10px] rounded-full uppercase tracking-tighter">觉醒</span>
+</div>
+</div>
+</section>
+<!-- Image Slice (Artistic atmosphere) -->
+<section class="fade-in-up stagger-3 h-64 w-full rounded-xl overflow-hidden relative shadow-lg">
+<div class="absolute inset-0 bg-ink-black/20 mix-blend-multiply z-10"></div>
+<img class="w-full h-full object-cover" data-alt="A moody, atmospheric photograph with shallow depth of field. In the foreground, a single blurred silhouette of a person stands before a misty urban morning light. The background features soft, glowing bokeh from streetlamps and a cool-toned morning haze. The style is melancholic and cinematic, emphasizing solitude and newfound freedom, dominated by muted greys, soft golds, and deep moss greens." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyaUkK_6DUx7B3qbhpFN4mJctrORY7D2UnUXUIZP27RWC-YEfskf1ExI34IYVMOSgK6nMC9q8DaxMTUdg0EqZydBY0f25tWMcxi4VnoPmXUMeGPmNtNYV4gHLHKfNaja_YMCsI0u44avGhmUalQ7mfahLOmD9w2UGw8Wu_hKri4nCDc_PL6PKcOA0P3rzJ0RcyfUQIbRwZtqnj4skGtmJKgivrP8Iw1VwzsGKj0dHwur0qXumrEzoyxw"/>
+<div class="absolute bottom-6 left-6 z-20">
+<span class="font-inner-monologue text-white/90 text-sm italic">命运在微小的瞬间悄然转向...</span>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation / Action Bar -->
+<div class="fixed bottom-0 left-0 w-full z-50 flex flex-col items-center pb-safe">
+<!-- Floating Action Buttons -->
+<div class="flex gap-4 mb-8 px-page-margin w-full max-w-[65ch]">
+<button class="flex-1 h-14 bg-primary text-parchment font-ui-label-lg rounded-xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">restart_alt</span>
+                再来一段人生
+            </button>
+<button class="w-14 h-14 border border-outline bg-surface/80 backdrop-blur-md text-primary rounded-xl flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+<!-- Global Navigation -->
+<nav class="w-full h-20 bg-surface/80 dark:bg-primary-container/80 backdrop-blur-md flex justify-around items-center px-page-margin rounded-t-full shadow-[0_-4px_20px_rgba(45,52,46,0.05)]">
+<div class="flex flex-col items-center justify-center text-moss-dim opacity-60 hover:opacity-100 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary scale-110 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-moss-dim opacity-60 hover:opacity-100 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings_suggest">settings_suggest</span>
+</div>
+</nav>
+</div>
+<script>
+        // Micro-interaction for cards
+        document.querySelectorAll('.bg-surface-container-low').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Simple scroll observer for fading narrative
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = "1";
+                    entry.target.style.filter = "blur(0px)";
+                } else {
+                    entry.target.style.opacity = "0.5";
+                    entry.target.style.filter = "blur(1px)";
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.style.transition = "opacity 0.6s ease, filter 0.6s ease";
+            observer.observe(section);
+        });
+    </script>
+</body></html>

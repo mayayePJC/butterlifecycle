@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&amp;family=Work+Sans:wght@300;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        body {
+            background-color: #fcf9f2;
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+            scroll-behavior: smooth;
+        }
+
+        .ink-fade-in {
+            animation: inkFade 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes inkFade {
+            0% { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        .custom-underline:focus {
+            outline: none;
+            border-bottom: 1px solid #181f19;
+            transition: border-color 0.4s ease;
+        }
+
+        /* Glassmorphism for the character sheet */
+        .glass-panel {
+            background: rgba(252, 249, 242, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Narrative spacing rhythm */
+        .narrative-container {
+            max-width: 65ch;
+            margin: 0 auto;
+        }
+    </style>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#c4c7c2",
+                    "blood-ox": "#6B2D2D",
+                    "secondary": "#695d4a",
+                    "tertiary-fixed": "#d2e8d7",
+                    "on-secondary-fixed-variant": "#504534",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed": "#231a0c",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#414942",
+                    "primary-container": "#2d342e",
+                    "moss-dim": "#4A5D50",
+                    "tertiary-fixed-dim": "#b7ccbc",
+                    "inverse-on-surface": "#f3f0e9",
+                    "surface-container-low": "#f6f3ec",
+                    "withered-gold": "#8C7E6A",
+                    "on-tertiary-fixed-variant": "#384b3f",
+                    "on-surface-variant": "#444844",
+                    "primary": "#181f19",
+                    "on-tertiary-fixed": "#0d1f15",
+                    "tertiary-container": "#24362b",
+                    "on-background": "#1c1c18",
+                    "background": "#fcf9f2",
+                    "surface-container-high": "#ebe8e1",
+                    "primary-fixed-dim": "#c1c8c0",
+                    "surface-container-highest": "#e5e2db",
+                    "parchment": "#F4F1EA",
+                    "surface-dim": "#dcdad3",
+                    "surface-bright": "#fcf9f2",
+                    "secondary-container": "#f2e0c8",
+                    "ink-black": "#1A1C1A",
+                    "on-primary-container": "#959c94",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary": "#0f2116",
+                    "secondary-fixed-dim": "#d5c4ad",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e5e2db",
+                    "inverse-primary": "#c1c8c0",
+                    "surface-tint": "#596059",
+                    "on-surface": "#1c1c18",
+                    "on-secondary-container": "#6f6350",
+                    "shadow-gray": "#D1CEC7",
+                    "secondary-fixed": "#f2e0c8",
+                    "on-primary-fixed": "#161d18",
+                    "on-primary": "#ffffff",
+                    "outline": "#747873",
+                    "inverse-surface": "#31312c",
+                    "surface-container": "#f1eee7",
+                    "on-tertiary-container": "#8b9f90",
+                    "surface": "#fcf9f2",
+                    "primary-fixed": "#dde4db"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "element-gap": "1rem",
+                    "section-gap": "3rem",
+                    "line-length-max": "65ch",
+                    "page-margin": "2rem",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "ui-label-sm": ["Work Sans"],
+                    "narrative-body": ["\"Source Serif 4\""],
+                    "ui-label-lg": ["Work Sans"],
+                    "status-number": ["Work Sans"],
+                    "narrative-title": ["Noto Serif SC"],
+                    "inner-monologue": ["\"Source Serif 4\""]
+            },
+            "fontSize": {
+                    "ui-label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "narrative-body": ["18px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "ui-label-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "status-number": ["20px", {"lineHeight": "24px", "fontWeight": "300"}],
+                    "narrative-title": ["28px", {"lineHeight": "40px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "inner-monologue": ["16px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="text-on-background min-h-screen flex flex-col items-center">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-page-margin h-16 bg-transparent">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95 duration-300" data-icon="close">close</button>
+<h1 class="text-narrative-title font-narrative-title text-primary tracking-widest">蝴蝶人生</h1>
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95 duration-300" data-icon="more_horiz">more_horiz</button>
+</header>
+<!-- Background Atmospheric Layer -->
+<div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+
+</div>
+<!-- Main Narrative Canvas -->
+<main class="relative z-10 w-full max-w-[800px] px-page-margin pt-32 pb-48 flex-grow flex flex-col">
+<!-- Story Beat -->
+<section class="ink-fade-in mb-section-gap">
+<div class="relative mb-element-gap">
+<span class="absolute -left-8 top-0 text-withered-gold opacity-30 font-status-number">01.</span>
+<p class="font-narrative-body text-narrative-body text-primary leading-relaxed">
+                    你在上班路上，看到一个老人在斑马线上摔倒了。周围的人行色匆匆，红灯即将亮起，如果你停下来，这周的全勤奖就没了。
+                </p>
+</div>
+<!-- Inner Monologue -->
+<div class="mt-section-gap border-l border-outline-variant/30 pl-6 italic opacity-80">
+<p class="font-inner-monologue text-inner-monologue text-secondary">
+                    “你的手心在冒汗。主管昨天的警告还在耳边，但那双颤抖的手...”
+                </p>
+</div>
+</section>
+<!-- Choices Section -->
+<section class="mt-auto space-y-4 ink-fade-in" style="animation-delay: 0.4s;">
+<!-- Choice 1 -->
+<button class="w-full text-left p-6 border border-secondary/20 hover:border-primary hover:bg-surface-container-low transition-all duration-400 group">
+<div class="flex items-center justify-between">
+<span class="font-ui-label-lg text-ui-label-lg text-primary">[保持安全]</span>
+<span class="material-symbols-outlined text-withered-gold opacity-0 group-hover:opacity-100 transition-opacity" data-icon="east">east</span>
+</div>
+<p class="mt-2 font-ui-label-sm text-ui-label-sm text-on-surface-variant">假装没看见，快步走过。</p>
+</button>
+<!-- Choice 2 -->
+<button class="w-full text-left p-6 border border-secondary/20 hover:border-primary hover:bg-surface-container-low transition-all duration-400 group">
+<div class="flex items-center justify-between">
+<span class="font-ui-label-lg text-ui-label-lg text-primary">[细微偏航]</span>
+<span class="material-symbols-outlined text-withered-gold opacity-0 group-hover:opacity-100 transition-opacity" data-icon="east">east</span>
+</div>
+<p class="mt-2 font-ui-label-sm text-ui-label-sm text-on-surface-variant">扶她到路边，然后拼命跑向地铁站。</p>
+</button>
+<!-- Choice 3 -->
+<button class="w-full text-left p-6 border border-secondary/20 hover:border-primary hover:bg-surface-container-low transition-all duration-400 group">
+<div class="flex items-center justify-between">
+<span class="font-ui-label-lg text-ui-label-lg text-primary">[冒险选择]</span>
+<span class="material-symbols-outlined text-withered-gold opacity-0 group-hover:opacity-100 transition-opacity" data-icon="east">east</span>
+</div>
+<p class="mt-2 font-ui-label-sm text-ui-label-sm text-on-surface-variant">留下来等救护车，并给主管发信息请假。</p>
+</button>
+<!-- Custom Input -->
+<div class="mt-8 pt-8">
+<div class="flex items-center space-x-4 border-b border-outline-variant/50 focus-within:border-primary transition-colors py-2">
+<span class="material-symbols-outlined text-withered-gold text-sm" data-icon="edit_note">edit_note</span>
+<input class="w-full bg-transparent border-none focus:ring-0 font-ui-label-lg text-ui-label-lg placeholder:text-outline/50" placeholder="或者，写下你的选择..." type="text"/>
+<button class="font-ui-label-sm text-ui-label-sm text-primary uppercase tracking-tighter opacity-60 hover:opacity-100 transition-opacity">确认</button>
+</div>
+</div>
+</section>
+<!-- Low Priority Exit -->
+<footer class="mt-section-gap flex justify-center pb-8 ink-fade-in" style="animation-delay: 0.8s;">
+<button class="font-ui-label-sm text-ui-label-sm text-withered-gold italic hover:text-blood-ox transition-colors flex items-center space-x-1">
+<span>到此为止</span>
+<span class="material-symbols-outlined text-[10px]" data-icon="close">close</span>
+</button>
+</footer>
+</main>
+<!-- Bottom Navigation Shell (Contextual Hidden Tray Logic) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-page-margin pb-safe glass-panel shadow-[0_-4px_20px_rgba(45,52,46,0.05)] rounded-t-full">
+<a class="flex flex-col items-center justify-center text-primary scale-110 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="auto_stories" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+</a>
+<a class="flex flex-col items-center justify-center text-moss-dim opacity-60 hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-moss-dim opacity-60 hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings_suggest">settings_suggest</span>
+</a>
+</nav>
+<!-- Interaction Script -->
+<script>
+        // Simple micro-interaction for choice selection
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if(this.classList.contains('group')) {
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => this.style.transform = 'scale(1)', 150);
+                }
+            });
+        });
+
+        // Parallax effect for shader background
+        window.addEventListener('mousemove', (e) => {
+            const shader = document.querySelector('webgl-shader');
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            shader.style.transform = `translate(${x}px, ${y}px)`;
+        });
+    </script>
+</body></html>

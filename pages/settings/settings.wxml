@@ -1,0 +1,50 @@
+<view class="screen settings-screen">
+  <view class="paper-grain"></view>
+
+  <view class="app-bar">
+    <button class="icon-button" bindtap="back">‹</button>
+    <text class="app-title">设置</text>
+    <button class="icon-button" bindtap="noop"> </button>
+  </view>
+
+  <view class="soft-card settings-card fade-up">
+    <text class="section-label">AI Stream</text>
+    <text class="narrative-title">流式续写</text>
+    <text class="ui-text helper">开启后，小程序会用 wx.request 的分块响应读取 OpenAI-compatible 接口。API Key 只保存在本机微信缓存中。</text>
+
+    <view class="switch-row">
+      <view>
+        <text class="switch-title">启用 AI</text>
+        <text class="switch-desc">关闭时使用本地规则兜底生成。</text>
+      </view>
+      <switch checked="{{config.enabled}}" color="#4A5D50" bindchange="onEnabledChange" />
+    </view>
+
+    <view class="field-group">
+      <text class="field-label">Endpoint</text>
+      <input class="field" value="{{config.endpoint}}" placeholder="https://api.openai.com/v1/chat/completions" bindinput="onEndpointInput" />
+    </view>
+
+    <view class="field-group">
+      <text class="field-label">Model</text>
+      <input class="field" value="{{config.model}}" placeholder="gpt-4o-mini" bindinput="onModelInput" />
+    </view>
+
+    <view class="field-group">
+      <text class="field-label">API Key</text>
+      <input class="field" password value="{{pendingKey}}" placeholder="{{keyPlaceholder}}" bindinput="onApiKeyInput" />
+      <text class="key-note">若已保存，留空不会覆盖；输入新 key 后点保存会替换。</text>
+    </view>
+
+    <button class="primary-button" bindtap="save">保存设置</button>
+    <button class="ghost-button" bindtap="clearKey">清除 API Key</button>
+  </view>
+
+  <view class="soft-card prompt-card">
+    <text class="section-label">Narrative Rules</text>
+    <text class="rule">角色有惯性，偏航会回弹。</text>
+    <text class="rule">离谱事件需要偿还因果债。</text>
+    <text class="rule">每 3-5 步需要一次现实回拽。</text>
+    <text class="rule">结束时生成阶段性回望，而不是胜负评价。</text>
+  </view>
+</view>
