@@ -12,7 +12,6 @@
       <view wx:for="{{beats}}" wx:key="id" class="beat" id="beat-{{item.turn}}">
         <view class="beat-number">{{item.turnText}}</view>
         <view wx:if="{{item.action}}" class="action-recap">
-          <text>{{item.action.tag}}</text>
           <text>{{item.action.text}}</text>
         </view>
         <text class="narrative-body scene">{{item.scene}}</text>
@@ -55,10 +54,9 @@
     <view class="choice-list">
       <button wx:for="{{choices}}" wx:key="text" class="choice-button" disabled="{{streaming}}" data-index="{{index}}" bindtap="chooseOption">
         <view class="choice-head">
-          <text>[{{item.tag}}]</text>
+          <text>{{item.text}}</text>
           <text>→</text>
         </view>
-        <text class="choice-copy">{{item.text}}</text>
       </button>
     </view>
 
