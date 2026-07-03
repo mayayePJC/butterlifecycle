@@ -1,9 +1,9 @@
 <view class="screen event-screen">
   <view class="paper-grain"></view>
 
-  <view class="app-bar">
+  <view class="app-bar event-app-bar">
     <button class="icon-button" bindtap="back">‹</button>
-    <text class="app-title">起点</text>
+    <text class="event-nav-spacer"></text>
     <button class="icon-button" bindtap="goSettings">•••</button>
   </view>
 

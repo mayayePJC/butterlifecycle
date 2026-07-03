@@ -1,6 +1,15 @@
 .event-screen {
-  padding-top: calc(env(safe-area-inset-top) + 168rpx);
+  padding-top: calc(env(safe-area-inset-top) + 188rpx);
   padding-bottom: 160rpx;
+}
+
+.event-app-bar {
+  min-height: 136rpx;
+  padding-top: calc(env(safe-area-inset-top) + 34rpx);
+}
+
+.event-nav-spacer {
+  flex: 1;
 }
 
 .event-card {
