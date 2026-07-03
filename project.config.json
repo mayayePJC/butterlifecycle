@@ -2,6 +2,7 @@
   "description": "蝴蝶人生微信原生小程序",
   "compileType": "miniprogram",
   "miniprogramRoot": "./",
+  "cloudfunctionRoot": "cloudfunctions/",
   "appid": "wx63ffcde9b9c771fc",
   "projectname": "butterfly-life",
   "setting": {

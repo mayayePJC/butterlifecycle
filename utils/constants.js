@@ -5,9 +5,7 @@ const STORAGE_KEYS = {
 
 const DEFAULT_AI_CONFIG = {
   enabled: false,
-  endpoint: "https://api.openai.com/v1/chat/completions",
-  model: "gpt-4o-mini",
-  apiKey: ""
+  proxyUrl: ""
 };
 
 const CHARACTER_PRESETS = [

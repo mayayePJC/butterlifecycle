@@ -22,7 +22,6 @@
       </view>
 
       <view wx:if="{{streaming}}" class="stream-panel" id="streaming">
-        <text class="section-label">Writing</text>
         <text class="stream-text">{{streamText || "她的下一段人生正在浮现..."}}</text>
       </view>
 

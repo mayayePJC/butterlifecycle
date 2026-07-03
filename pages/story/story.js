@@ -64,7 +64,7 @@ Page({
       scrollIntoView: "streaming"
     });
 
-    if (!config.enabled || !config.apiKey) {
+    if (!config.enabled || !config.proxyUrl) {
       setTimeout(() => {
         const beat = narrative.fallbackTurn(story, action);
         const next = narrative.appendBeat(story, action, beat);
@@ -78,9 +78,9 @@ Page({
     ai.streamChat({
       config,
       messages: prompt.buildTurnMessages(story, action),
-      onDelta: (delta, fullText) => {
+      onDelta: () => {
         this.setData({
-          streamText: this.streamingHint(fullText),
+          streamText: "她的下一段人生正在浮现...",
           scrollIntoView: "streaming"
         });
       }
@@ -96,22 +96,8 @@ Page({
       storage.saveStory(next);
       this.setData({ streaming: false, streamText: "" });
       this.refresh(next);
-      wx.showToast({
-        title: error.message ? "AI 未通过审稿，已用本地续写" : "已用本地续写",
-        icon: "none"
-      });
+      console.warn("AI stream failed, fallback used:", error);
     });
-  },
-
-  streamingHint(fullText) {
-    const text = fullText || "";
-    if (text.indexOf("\"reviewer\"") >= 0) return "审稿官正在检查角色一致性、因果债和安全边界...";
-    if (text.indexOf("\"writer\"") >= 0) return "编剧官正在把这一回合写成可读的场景...";
-    if (text.indexOf("\"genre_gatekeeper\"") >= 0) return "世界类型官正在判断门能开到哪里...";
-    if (text.indexOf("\"fate_director\"") >= 0) return "命运官正在安排现实的回应和代价...";
-    if (text.indexOf("\"psychologist\"") >= 0) return "心理官正在判断这次选择是否真的留下痕迹...";
-    if (text.indexOf("\"archivist\"") >= 0) return "档案官正在整理已经发生的事实...";
-    return "叙事引擎正在按 6 个职能处理这一回合...";
   },
 
   finishStory() {

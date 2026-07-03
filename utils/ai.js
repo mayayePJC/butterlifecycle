@@ -99,8 +99,8 @@ function streamChat(options) {
   const onDelta = options.onDelta || function () {};
   const temperature = typeof options.temperature === "number" ? options.temperature : 0.82;
 
-  if (!config.enabled || !config.apiKey) {
-    return Promise.reject(new Error("AI 未启用或缺少 API Key"));
+  if (!config.enabled || !config.proxyUrl) {
+    return Promise.reject(new Error("AI 未启用或缺少云端代理地址"));
   }
 
   return new Promise(function (resolve, reject) {
@@ -157,18 +157,15 @@ function streamChat(options) {
     }
 
     const requestTask = wx.request({
-      url: config.endpoint,
+      url: config.proxyUrl,
       method: "POST",
       enableChunked: true,
       timeout: 120000,
       header: {
-        "content-type": "application/json",
-        "authorization": "Bearer " + config.apiKey
+        "content-type": "application/json"
       },
       data: {
-        model: config.model,
         messages,
-        stream: true,
         temperature
       },
       success(res) {

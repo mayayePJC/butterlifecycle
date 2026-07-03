@@ -2,15 +2,10 @@
   padding-bottom: 120rpx;
 }
 
-.settings-card,
-.prompt-card {
+.settings-card {
   display: flex;
   flex-direction: column;
   gap: 28rpx;
-}
-
-.helper {
-  display: block;
 }
 
 .switch-row {
@@ -32,28 +27,8 @@
   font-weight: 700;
 }
 
-.switch-desc,
-.key-note {
-  display: block;
-  margin-top: 10rpx;
-  color: rgba(68, 72, 68, 0.68);
-  font-family: Arial, sans-serif;
-  font-size: 22rpx;
-  line-height: 34rpx;
-}
-
 .field-group {
   display: flex;
   flex-direction: column;
   gap: 10rpx;
-}
-
-.prompt-card {
-  margin-top: 42rpx;
-}
-
-.rule {
-  color: #444844;
-  font-size: 28rpx;
-  line-height: 46rpx;
 }

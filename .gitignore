@@ -5,3 +5,5 @@ miniprogram_npm/
 .DS_Store
 *.log
 .publish_tmp/
+cloud/
+cloudfunctions/**/node_modules/

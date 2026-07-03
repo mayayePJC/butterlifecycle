@@ -13,8 +13,7 @@
   </view>
 
   <view wx:if="{{loading}}" class="loading-card">
-    <text class="section-label">Writing</text>
-    <text class="stream-text">{{streamText || "回望正在慢慢显影..."}}</text>
+    <text class="stream-text">回望正在慢慢显影...</text>
   </view>
 
   <block wx:else>

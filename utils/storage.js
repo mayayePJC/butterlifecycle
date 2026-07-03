@@ -2,13 +2,21 @@ const constants = require("./constants");
 
 function readAiConfig() {
   const saved = wx.getStorageSync(constants.STORAGE_KEYS.AI_CONFIG) || {};
-  return Object.assign({}, constants.DEFAULT_AI_CONFIG, saved);
+  return normalizeAiConfig(saved);
 }
 
 function saveAiConfig(config) {
-  const next = Object.assign({}, constants.DEFAULT_AI_CONFIG, config || {});
+  const next = normalizeAiConfig(config);
   wx.setStorageSync(constants.STORAGE_KEYS.AI_CONFIG, next);
   return next;
+}
+
+function normalizeAiConfig(config) {
+  const source = config || {};
+  return {
+    enabled: !!source.enabled,
+    proxyUrl: source.proxyUrl || ""
+  };
 }
 
 function readStory() {

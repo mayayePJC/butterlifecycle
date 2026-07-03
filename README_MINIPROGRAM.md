@@ -8,18 +8,17 @@
 2. `AppID` 可先使用测试号或游客模式。
 3. 入口页是 `pages/character/character`。
 
-## AI 流式配置
+## AI 云端流式配置
 
 在小程序内进入“设置”：
 
 - 开启“启用 AI”。
-- Endpoint 默认是 `https://api.openai.com/v1/chat/completions`。
-- Model 默认是 `gpt-4o-mini`，也可以在设置页改成你的 OpenAI-compatible 服务支持的模型名。
-- 填入 API Key 后保存。
+- 填入你的“云端代理 URL”。
+- API Key 不在小程序内填写，必须放在云端代理的环境变量里。
 
-故事页会通过 `wx.request({ enableChunked: true })` 接收流式分块，并解析 OpenAI-compatible Chat Completions 的 SSE `data:` 增量。
+故事页会通过 `wx.request({ enableChunked: true })` 请求云端代理并接收流式分块。云端代理再请求 OpenAI-compatible Chat Completions，并把 SSE `data:` 增量转发回来。
 
-开发者工具里如遇到域名限制，可临时关闭“校验合法域名”；正式发布需要在微信公众平台配置 request 合法域名。生产环境不建议把真实 API Key 放在小程序端，最好改为调用你自己的后端或云函数代理。
+代理示例在 `cloudfunctions/ai-stream-proxy/`。正式发布需要在微信公众平台配置 request 合法域名。
 
 ## AI Role Skills 融入方式
 
@@ -29,7 +28,7 @@
 - `utils/prompt.js` 要求模型按“档案官、心理官、命运官、世界类型官、编剧官、审稿官”顺序工作，并返回严格 JSON。
 - `utils/narrative.js` 解析 JSON：只把 `writer` 内容展示给用户；把 `psychologist.state_delta_suggestion` 合并进隐藏状态；把 `fate_director` 和 `genre_gatekeeper` 的代价/因果债保存到故事状态。
 - 如果 `reviewer.pass === false`，字段缺失，或 JSON 解析失败，代码会自动降级到本地规则续写。
-- 故事页流式生成时只显示职能处理进度，不暴露内部 JSON 和数值。
+- 故事页流式生成时只显示自然等待状态，不暴露内部 JSON、职能和数值。
 
 ## 已覆盖的 MVP
 

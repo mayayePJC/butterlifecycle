@@ -23,7 +23,7 @@ Page({
 
   generate(story) {
     const config = storage.readAiConfig();
-    if (!config.enabled || !config.apiKey) {
+    if (!config.enabled || !config.proxyUrl) {
       this.setData({
         retrospect: narrative.fallbackRetrospect(story),
         loading: false
@@ -35,8 +35,8 @@ Page({
       config,
       messages: prompt.buildRetrospectMessages(story),
       temperature: 0.72,
-      onDelta: (delta, fullText) => {
-        this.setData({ streamText: fullText });
+      onDelta: () => {
+        this.setData({ streamText: "回望正在慢慢显影..." });
       }
     }).then((raw) => {
       this.setData({
@@ -44,13 +44,13 @@ Page({
         loading: false,
         streamText: ""
       });
-    }).catch(() => {
+    }).catch((error) => {
       this.setData({
         retrospect: narrative.fallbackRetrospect(story),
         loading: false,
         streamText: ""
       });
-      wx.showToast({ title: "AI 失败，已用本地回望", icon: "none" });
+      console.warn("AI retrospect failed, fallback used:", error);
     });
   },
 
