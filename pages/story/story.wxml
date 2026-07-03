@@ -31,26 +31,6 @@
   </scroll-view>
 
   <view class="choice-panel">
-    <view class="status-strip" bindtap="toggleStatus">
-      <view class="status-copy">
-        <text>{{statusHint}}</text>
-        <text class="status-small">轻触查看隐藏状态</text>
-      </view>
-      <text class="status-arrow">{{showStatus ? "⌄" : "⌃"}}</text>
-    </view>
-
-    <view wx:if="{{showStatus}}" class="hidden-tray">
-      <view wx:for="{{statusList}}" wx:key="name" class="status-item">
-        <view class="status-head">
-          <text>{{item.name}}</text>
-          <text>{{item.value}}</text>
-        </view>
-        <view class="status-bar">
-          <view class="status-fill" style="width: {{item.value}}%; background: {{item.color}};"></view>
-        </view>
-      </view>
-    </view>
-
     <view class="choice-list">
       <button wx:for="{{choices}}" wx:key="text" class="choice-button" disabled="{{streaming}}" data-index="{{index}}" bindtap="chooseOption">
         <view class="choice-head">

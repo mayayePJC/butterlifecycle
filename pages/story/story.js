@@ -11,10 +11,7 @@ Page({
     customAction: "",
     streaming: false,
     streamText: "",
-    scrollIntoView: "",
-    showStatus: false,
-    statusList: [],
-    statusHint: "她仍在原本的人生附近"
+    scrollIntoView: ""
   },
 
   onLoad() {
@@ -36,32 +33,8 @@ Page({
         });
       }),
       choices: last.choices || [],
-      statusList: this.buildStatusList(story.hiddenStatus),
-      statusHint: this.statusHint(story.hiddenStatus),
       scrollIntoView: "story-bottom"
     });
-  },
-
-  buildStatusList(status) {
-    return [
-      { name: "惯性", value: status.inertia, color: "#8C7E6A" },
-      { name: "瞬时偏航", value: status.momentDeviation, color: "#4A5D50" },
-      { name: "人格沉积", value: status.sedimentation, color: "#24362B" },
-      { name: "现实压力", value: status.realityPressure, color: "#6B2D2D" },
-      { name: "世界异化", value: status.worldStrangeness, color: "#695D4A" }
-    ];
-  },
-
-  statusHint(status) {
-    if (status.worldStrangeness > 32) return "门已经出现，但她未必会走进去";
-    if (status.realityPressure > 62) return "现实正在用力把她拽回去";
-    if (status.sedimentation > 26) return "某些选择开始沉进她的骨头";
-    if (status.momentDeviation > 18) return "她刚刚离开旧轨道一点";
-    return "她仍在原本的人生附近";
-  },
-
-  toggleStatus() {
-    this.setData({ showStatus: !this.data.showStatus });
   },
 
   chooseOption(event) {
