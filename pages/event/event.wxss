@@ -1,4 +1,5 @@
 .event-screen {
+  padding-top: calc(env(safe-area-inset-top) + 168rpx);
   padding-bottom: 160rpx;
 }
 

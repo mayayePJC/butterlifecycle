@@ -3,7 +3,7 @@
 
   <view class="app-bar">
     <button class="icon-button" bindtap="back">‹</button>
-    <text class="app-title">给她一天里的一件小事</text>
+    <text class="app-title">起点</text>
     <button class="icon-button" bindtap="goSettings">•••</button>
   </view>
 
