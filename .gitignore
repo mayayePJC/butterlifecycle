@@ -7,3 +7,4 @@ miniprogram_npm/
 .publish_tmp/
 cloud/
 cloudfunctions/**/node_modules/
+webapp/.env

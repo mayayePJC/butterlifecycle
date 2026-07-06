@@ -56,18 +56,35 @@ function createEventFromText(text) {
   const raw = (text || "").trim();
   return {
     id: makeId("custom_event"),
-    text: raw || "她在一个普通时刻遇到了一件微小却不肯过去的事。",
-    innerReaction: "她一边告诉自己这没什么，一边已经感觉到生活的轨道轻轻偏了一下。",
-    pressure: "旧习惯要求她立刻恢复正常，但新的问题已经留在她身上。",
-    choices: [
-      { tag: "保持安全", text: "尽量把这件事压回日常里。" },
-      { tag: "细微偏航", text: "做一个很小但不完全符合惯性的回应。" },
-      { tag: "冒险选择", text: "承认这件事重要，并为此付出一点代价。" }
-    ]
+    text: raw,
+    innerReaction: "",
+    pressure: "",
+    choices: []
   };
 }
 
+function normalizeChoices(choices) {
+  const list = Array.isArray(choices) ? choices : [];
+  const normalized = list.slice(0, 3).map(function (choice, index) {
+    if (typeof choice === "string") {
+      return null;
+    }
+    return {
+      tag: choice && (choice.tag || choice.label) || "",
+      intent: choice && choice.intent || "",
+      text: choice && choice.text || ""
+    };
+  }).filter(function (choice) {
+    return !!choice && !!choice.tag && !!choice.text;
+  });
+  return normalized.length >= 3 ? normalized : null;
+}
+
 function buildInitialStory(character, event) {
+  const choices = normalizeChoices(event && event.choices);
+  if (!choices) {
+    throw new Error("起点事件缺少 AI 生成的 3 个选择，请重新生成事件。");
+  }
   const firstBeat = {
     id: makeId("beat"),
     turn: 1,
@@ -75,7 +92,7 @@ function buildInitialStory(character, event) {
     scene: event.text,
     innerReaction: event.innerReaction,
     pressure: event.pressure,
-    choices: event.choices || [],
+    choices,
     stateNote: "起点事件仍在生活半径内，偏航尚未沉积。"
   };
 
@@ -199,9 +216,8 @@ function extractSection(raw, name) {
 function parseSkillChoices(writer) {
   const choices = Array.isArray(writer && writer.choices) ? writer.choices : [];
   return choices.slice(0, 3).map(function (choice, index) {
-    const fallbackLabels = ["回到惯性", "轻微偏航", "高偏航"];
     return {
-      tag: choice.label || fallbackLabels[index] || "行动",
+      tag: choice.label || choice.tag || ("选项" + (index + 1)),
       intent: choice.intent || "",
       text: choice.text || ""
     };
@@ -260,75 +276,33 @@ function parseChoices(text) {
     const match = cleaned.match(/^\[([^\]]+)\]\s*(.+)$/);
     if (match) {
       choices.push({ tag: match[1].trim(), text: match[2].trim() });
-    } else if (cleaned) {
-      choices.push({ tag: "行动", text: cleaned });
     }
   });
 
   return choices.slice(0, 3);
 }
 
-function fallbackChoices(story) {
-  const pressure = story.hiddenStatus.realityPressure;
-  const strange = story.hiddenStatus.worldStrangeness;
-  if (strange > 20) {
-    return [
-      { tag: "保持安全", text: "把异常先藏起来，回到能解释的日常。" },
-      { tag: "追问", text: "沿着刚才的线索继续查下去。" },
-      { tag: "求助", text: "把一部分真相告诉可信的人。" }
-    ];
-  }
-  if (pressure > 60) {
-    return [
-      { tag: "旧习惯", text: "先道歉，把眼前的压力熬过去。" },
-      { tag: "说出真话", text: "承认自己的选择，也承认它带来的麻烦。" },
-      { tag: "求助", text: "向一个可能理解她的人开口。" }
-    ];
-  }
-  return [
-    { tag: "保持安全", text: "退回熟悉的位置，让事情慢慢冷掉。" },
-    { tag: "细微偏航", text: "做一个很小但清醒的反应。" },
-    { tag: "冒险选择", text: "继续向前一步，不急着把自己解释干净。" }
-  ];
-}
-
-function parseTurn(raw, story) {
+function parseTurn(raw, story, actionInput) {
   const skillTurn = parseSkillTurn(raw, story);
   if (skillTurn) return skillTurn;
 
   const choices = parseChoices(extractSection(raw, "选项"));
   const statusText = extractSection(raw, "状态");
+  const sceneText = extractSection(raw, "外部剧情");
+  const innerReaction = extractSection(raw, "内心反应");
+  const pressure = extractSection(raw, "现实回拽");
+  if (!sceneText || !innerReaction || !pressure || choices.length < 3) {
+    return null;
+  }
   return {
     id: makeId("beat"),
     turn: story.beats.length + 1,
-    scene: extractSection(raw, "外部剧情") || raw || "事情没有像她预想的那样结束。",
-    innerReaction: extractSection(raw, "内心反应") || "她发现自己无法立刻回到从前的状态。",
-    pressure: extractSection(raw, "现实回拽") || "生活仍然用钱、时间、关系和旧习惯拉住她。",
-    choices: choices.length ? choices : fallbackChoices(story),
-    stateNote: statusText || "这次选择留下了轻微余震。",
-    aiRaw: raw
-  };
-}
-
-function fallbackTurn(story, actionInput) {
-  const action = normalizeAction(actionInput);
-  const character = story.character;
-  const turn = story.beats.length + 1;
-  const everyFourth = turn % 4 === 0;
-  const scene = "她选择了：" + action.text + "。事情没有立刻变得戏剧化，只是某个细节开始不肯归位。有人看见了她的迟疑，也有人把她的沉默误解成默认。";
-  const inner = "她想把这次选择解释成偶然，可身体比语言诚实。她知道，自己刚才至少有一瞬间不再完全服从旧习惯。";
-  const pressure = everyFourth
-    ? "现实很快回拽她：消息、账单、工作和关系一起涌来，提醒她任何偏航都要付出具体代价。"
-    : "现实没有给她掌声，只给她更难回答的问题。";
-
-  return {
-    id: makeId("beat"),
-    turn,
-    scene,
-    innerReaction: inner,
+    scene: sceneText,
+    innerReaction,
     pressure,
-    choices: fallbackChoices(story),
-    stateNote: character.title + "仍然像同一个人，只是惯性被轻轻挪动了一寸。"
+    choices,
+    stateNote: statusText,
+    aiRaw: raw
   };
 }
 
@@ -408,41 +382,30 @@ function appendBeat(story, actionInput, beatInput) {
 }
 
 function parseRetrospect(raw, story) {
-  const latestChoice = story.importantChoices.length
-    ? story.importantChoices[story.importantChoices.length - 1].text
-    : story.event.text;
+  const quote = extractSection(raw, "回望");
+  const lost = extractSection(raw, "失去");
+  const gained = extractSection(raw, "获得");
+  const strongerSelf = extractSection(raw, "变强的自我");
+  const oldSelf = extractSection(raw, "仍在拖拽的旧我");
+  const keyChoice = extractSection(raw, "最重要的选择");
+  const tags = (extractSection(raw, "标签") || "")
+    .split(/[，,、\s]+/)
+    .filter(Boolean)
+    .slice(0, 3);
+
+  if (!quote || !lost || !gained || !strongerSelf || !oldSelf || !keyChoice || !tags.length) {
+    return null;
+  }
 
   return {
-    quote: extractSection(raw, "回望") || raw || "她没有抵达结局，只是从一段人生里暂时走出来。",
-    lost: extractSection(raw, "失去") || "一部分无条件的顺从",
-    gained: extractSection(raw, "获得") || "一次看见自己的机会",
-    strongerSelf: extractSection(raw, "变强的自我") || "精神自我",
-    oldSelf: extractSection(raw, "仍在拖拽的旧我") || "那个害怕代价的旧我",
-    keyChoice: extractSection(raw, "最重要的选择") || latestChoice,
-    tags: (extractSection(raw, "标签") || "偏航,余震")
-      .split(/[，,、\s]+/)
-      .filter(Boolean)
-      .slice(0, 3),
+    quote,
+    lost,
+    gained,
+    strongerSelf,
+    oldSelf,
+    keyChoice,
+    tags,
     raw
-  };
-}
-
-function fallbackRetrospect(story) {
-  const character = story.character;
-  const status = story.hiddenStatus;
-  const latestChoice = story.importantChoices.length
-    ? story.importantChoices[story.importantChoices.length - 1].text
-    : story.event.text;
-  const changed = status.sedimentation > 18 ? "她已经不只是偶尔偏航，而是开始把新的选择沉进骨头里。" : "她还没有彻底改变，但旧生活已经不能完整地解释她。";
-
-  return {
-    quote: character.title + "暂时停在这里。" + changed + "她失去了一点不用负责的安全感，也获得了看见自己的距离。",
-    lost: "一部分不用选择的安稳",
-    gained: status.worldStrangeness > 18 ? "辨认异常的敏感" : "承认欲望的勇气",
-    strongerSelf: status.sedimentation > 16 ? "精神自我" : "主体我",
-    oldSelf: character.fears[0] || "旧恐惧",
-    keyChoice: latestChoice,
-    tags: ["偏航", "代价"]
   };
 }
 
@@ -454,8 +417,6 @@ module.exports = {
   buildInitialStory,
   parseTurn,
   parseSkillTurn,
-  fallbackTurn,
   appendBeat,
-  parseRetrospect,
-  fallbackRetrospect
+  parseRetrospect
 };

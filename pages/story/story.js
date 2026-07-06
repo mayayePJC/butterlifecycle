@@ -3,6 +3,8 @@ const narrative = require("../../utils/narrative");
 const prompt = require("../../utils/prompt");
 const ai = require("../../utils/ai");
 
+const AI_STORY_TIMEOUT_MS = 75000;
+
 Page({
   data: {
     story: null,
@@ -25,6 +27,7 @@ Page({
 
   refresh(story) {
     const last = story.beats[story.beats.length - 1];
+    const target = story.beats.length > 1 ? "beat-" + last.turn : "story-bottom";
     this.setData({
       story,
       beats: story.beats.map(function (beat) {
@@ -33,7 +36,7 @@ Page({
         });
       }),
       choices: last.choices || [],
-      scrollIntoView: "story-bottom"
+      scrollIntoView: target
     });
   },
 
@@ -57,46 +60,60 @@ Page({
     if (this.data.streaming) return;
     const story = this.data.story;
     const config = storage.readAiConfig();
+    let finished = false;
+    let fallbackTimer = null;
+
+    const finishWithBeat = (beat) => {
+      if (finished) return;
+      finished = true;
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+      const next = narrative.appendBeat(story, action, beat);
+      storage.saveStory(next);
+      this.setData({ streaming: false, streamText: "" });
+      this.refresh(next);
+    };
+
+    const finishWithFallback = (message) => {
+      const beat = narrative.fallbackTurn(story, action);
+      finishWithBeat(beat);
+      if (message) {
+        wx.showToast({
+          title: message,
+          icon: "none"
+        });
+      }
+    };
+
     this.setData({
       streaming: true,
-      streamText: "",
+      streamText: "AI 正在续写，这一段可能需要几十秒...",
       customAction: "",
       scrollIntoView: "streaming"
     });
 
     if (!config.enabled || !config.proxyUrl) {
       setTimeout(() => {
-        const beat = narrative.fallbackTurn(story, action);
-        const next = narrative.appendBeat(story, action, beat);
-        storage.saveStory(next);
-        this.setData({ streaming: false, streamText: "" });
-        this.refresh(next);
+        finishWithFallback("");
       }, 360);
       return;
     }
 
-    ai.streamChat({
+    fallbackTimer = setTimeout(() => {
+      finishWithFallback("AI 太久未返回，已用本地剧情");
+    }, AI_STORY_TIMEOUT_MS + 5000);
+
+    ai.requestChat({
       config,
       messages: prompt.buildTurnMessages(story, action),
-      onDelta: () => {
-        this.setData({
-          streamText: "她的下一段人生正在浮现...",
-          scrollIntoView: "streaming"
-        });
-      }
+      maxTokens: 1200,
+      timeout: AI_STORY_TIMEOUT_MS
     }).then((raw) => {
-      const beat = narrative.parseTurn(raw, story);
-      const next = narrative.appendBeat(story, action, beat);
-      storage.saveStory(next);
-      this.setData({ streaming: false, streamText: "" });
-      this.refresh(next);
+      const beat = narrative.parseTurn(raw, story, action);
+      finishWithBeat(beat);
     }).catch((error) => {
-      const beat = narrative.fallbackTurn(story, action);
-      const next = narrative.appendBeat(story, action, beat);
-      storage.saveStory(next);
-      this.setData({ streaming: false, streamText: "" });
-      this.refresh(next);
-      console.warn("AI stream failed, fallback used:", error);
+      finishWithFallback(ai.describeError(error).slice(0, 18) || "AI 失败，已用本地剧情");
+      console.warn("AI story failed, fallback used:", error);
+      console.warn("AI error detail:", ai.describeError(error));
     });
   },
 

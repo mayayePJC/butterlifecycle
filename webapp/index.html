@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>蝴蝶人生</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="story-pane">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Butterfly Lifecycle</p>
+        </div>
+        <div class="status-pill" id="aiStatus">AI 未配置</div>
+      </header>
+
+      <section class="story-paper" id="storyPaper">
+        <div class="empty-state" id="emptyState">
+          <p>选一个人，放进一个事件里。故事会从她的第一个选择开始偏航。</p>
+        </div>
+        <div id="beats"></div>
+      </section>
+    </section>
+
+    <aside class="control-pane">
+      <nav class="step-tabs">
+        <button class="tab active" data-step="character">人物</button>
+        <button class="tab" data-step="event">事件</button>
+        <button class="tab" data-step="story">选择</button>
+        <button class="tab" data-step="retrospect">回望</button>
+      </nav>
+
+      <section class="panel active" data-panel="character">
+        <div class="panel-head">
+          <h2>人物底盘</h2>
+          <div class="head-actions">
+            <button class="ghost-small" id="aiCharacter">AI 随机</button>
+          </div>
+        </div>
+        <article class="character-card" id="characterCard"></article>
+        <label class="field-block">
+          <span>自定义人物</span>
+          <textarea id="customCharacter" maxlength="160" placeholder="写下一个普通人的人物画像..."></textarea>
+        </label>
+        <div class="button-row">
+          <button class="ghost-button" id="useCustomCharacter">使用画像</button>
+          <button class="primary-button" id="confirmCharacter">选择她</button>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="event">
+        <div class="panel-head">
+          <h2>起点事件</h2>
+          <div class="head-actions">
+            <button class="ghost-small" id="aiEvent">AI 随机</button>
+          </div>
+        </div>
+        <article class="event-card" id="eventCard"></article>
+        <label class="field-block">
+          <span>自定义事件</span>
+          <textarea id="customEvent" maxlength="180" placeholder="写下她今天遇到的一件小事..."></textarea>
+        </label>
+        <div class="button-row">
+          <button class="ghost-button" id="useCustomEvent">使用事件</button>
+          <button class="primary-button" id="startStory">开始故事</button>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="story">
+        <div class="panel-head">
+          <h2>下一步</h2>
+          <div class="head-actions">
+            <button class="ghost-small" id="restartStory">重开</button>
+          </div>
+        </div>
+        <div class="choice-list" id="choices"></div>
+        <form class="custom-action" id="customActionForm">
+          <input id="customAction" placeholder="或者，写下你的选择...">
+          <button type="submit">确认</button>
+        </form>
+        <button class="danger-button" id="finishStory">到此为止</button>
+      </section>
+
+      <section class="panel" data-panel="retrospect">
+        <div class="panel-head">
+          <h2>阶段回望</h2>
+          <button class="ghost-small" id="backToStory">继续</button>
+        </div>
+        <article class="retrospect-card" id="retrospectCard">
+          <p>故事停下时，这里会生成一段回望。</p>
+        </article>
+      </section>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <div class="loading-overlay" id="loadingOverlay" aria-live="polite">
+    <div class="loader"></div>
+    <span id="loadingText">正在生成...</span>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

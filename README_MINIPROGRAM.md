@@ -13,12 +13,12 @@
 在小程序内进入“设置”：
 
 - 开启“启用 AI”。
-- 填入你的“云端代理 URL”。
+- 调试时可填入云托管默认 HTTPS 地址；正式发布前必须改为云托管绑定的自定义 HTTPS 域名。
 - API Key 不在小程序内填写，必须放在云端代理的环境变量里。
 
 故事页会通过 `wx.request({ enableChunked: true })` 请求云端代理并接收流式分块。云端代理再请求 OpenAI-compatible Chat Completions，并把 SSE `data:` 增量转发回来。
 
-代理示例在 `cloudfunctions/ai-stream-proxy/`。正式发布需要在微信公众平台配置 request 合法域名。
+代理示例在 `cloudfunctions/ai-stream-proxy/`。正式发布需要在微信公众平台把自定义域名配置为 request 合法域名。
 
 ## AI Role Skills 融入方式
 

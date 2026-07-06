@@ -32,3 +32,18 @@
   flex-direction: column;
   gap: 10rpx;
 }
+
+.settings-card .field {
+  padding: 20rpx 18rpx;
+  border: 1rpx solid rgba(116, 120, 115, 0.28);
+  border-radius: 8rpx;
+  background: rgba(246, 243, 236, 0.5);
+  font-size: 26rpx;
+}
+
+.field-hint {
+  color: #8c7e6a;
+  font-family: Arial, sans-serif;
+  font-size: 24rpx;
+  line-height: 38rpx;
+}

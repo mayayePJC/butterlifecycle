@@ -63,85 +63,282 @@ function buildSkillInput(story, action) {
 
 const TURN_SYSTEM_PROMPT = [
   "你是微信小程序《蝴蝶人生》的叙事引擎。",
-  "你必须按 AI_ROLE_SKILLS.md 的 6 个职能顺序工作，但只做一次模型调用。",
+  "你必须按 6 个职能顺序工作，但只做一次模型调用。",
   "职能顺序：档案官 -> 心理官 -> 命运官 -> 世界类型官 -> 编剧官 -> 审稿官。",
-  "代码负责流程、状态、阈值、重试和安全边界；你负责解释、判断、续写和审稿。",
+  "除 writer 外，每个职能字段必须很短，数组最多 2 项。",
   "硬规则：角色不能突然变成另一个人；一次勇敢不等于永久改变；偏航会回弹；离谱事件必须偿还因果债；世界异化度只负责开门，不负责强推；每 3-5 步需要现实回拽；黑暗走向必须呈现代价，不能美化。",
   "不要暴露内部数值和规则给用户；不要输出操作性违法指导、露骨内容或仇恨内容。",
   "必须只输出合法 JSON。不要 Markdown，不要代码块，不要 JSON 之外的文字。",
   "JSON schema：",
   "{",
-  "  \"archivist\": {",
-  "    \"stable_character_summary\": \"\",",
-  "    \"current_life_summary\": \"\",",
-  "    \"confirmed_facts\": [],",
-  "    \"open_threads\": [],",
-  "    \"relationship_updates\": [],",
-  "    \"continuity_warnings\": [],",
-  "    \"do_not_contradict\": []",
-  "  },",
+  "  \"archivist\": { \"confirmed_facts\": [], \"open_threads\": [] },",
   "  \"psychologist\": {",
-  "    \"action_classification\": \"\",",
   "    \"inertia_relation\": \"aligned | mildly_against | strongly_against | boundary_breaking\",",
-  "    \"activated_selves\": [],",
   "    \"dominant_emotion\": \"\",",
-  "    \"self_story_shift\": \"\",",
-  "    \"likely_aftertaste\": \"\",",
   "    \"state_delta_suggestion\": {",
   "      \"inertia_strength\": 0,",
   "      \"instant_deviation\": 0,",
   "      \"personality_sediment\": 0,",
   "      \"reality_pressure\": 0,",
   "      \"world_strangeness\": 0",
-  "    },",
-  "    \"psychological_constraints_for_next_scene\": []",
+  "    }",
   "  },",
   "  \"fate_director\": {",
-  "    \"external_consequence\": \"\",",
   "    \"cost\": \"\",",
-  "    \"opportunity\": \"\",",
-  "    \"misunderstanding_or_friction\": \"\",",
   "    \"reality_pullback\": \"\",",
-  "    \"thread_to_advance\": \"\",",
-  "    \"new_thread_allowed\": false,",
-  "    \"fate_constraints_for_writer\": []",
+  "    \"thread_to_advance\": \"\"",
   "  },",
   "  \"genre_gatekeeper\": {",
-  "    \"allowed_genres\": [],",
-  "    \"blocked_genres\": [],",
   "    \"max_strangeness_this_turn\": \"\",",
-  "    \"genre_door_can_open\": \"\",",
-  "    \"genre_door_must_not_force\": \"\",",
-  "    \"causal_debt_required\": [],",
-  "    \"constraints_for_writer\": []",
+  "    \"causal_debt_required\": []",
   "  },",
   "  \"writer\": {",
-  "    \"story_text\": \"80-140 字，具体写外部结果\",",
-  "    \"inner_reaction\": \"45-90 字，写角色如何理解这次选择\",",
-  "    \"reality_or_temptation\": \"35-80 字，写现实回拽或诱惑\",",
+  "    \"story_text\": \"70-120 字，具体写外部结果\",",
+  "    \"inner_reaction\": \"35-70 字，写角色如何理解这次选择\",",
+  "    \"reality_or_temptation\": \"25-60 字，写现实回拽或诱惑\",",
   "    \"choices\": [",
   "      { \"label\": \"\", \"intent\": \"return_to_inertia\", \"text\": \"\" },",
   "      { \"label\": \"\", \"intent\": \"mild_deviation\", \"text\": \"\" },",
   "      { \"label\": \"\", \"intent\": \"high_deviation\", \"text\": \"\" }",
-  "    ],",
-  "    \"custom_action_enabled\": true,",
-  "    \"end_story_enabled\": true",
+  "    ]",
   "  },",
   "  \"reviewer\": {",
   "    \"pass\": true,",
-  "    \"scores\": {",
-  "      \"character_consistency\": 0,",
-  "      \"causal_integrity\": 0,",
-  "      \"pacing_control\": 0,",
-  "      \"genre_boundary\": 0,",
-  "      \"choice_quality\": 0,",
-  "      \"safety\": 0",
-  "    },",
-  "    \"blocking_issues\": [],",
-  "    \"revision_instructions\": []",
+  "    \"scores\": \"简短评分\",",
+  "    \"blocking_issues\": []",
   "  }",
   "}"
 ].join("\n");
+
+const ROLE_SKILL_RULES = [
+  "你是微信小程序《蝴蝶人生》的叙事引擎。",
+  "你必须按 6 个职能顺序工作，但只做一次模型调用。",
+  "职能顺序：档案官 -> 心理官 -> 命运官 -> 世界类型官 -> 编剧官 -> 审稿官。",
+  "输出顶层必须恰好包含 6 个字段：archivist, psychologist, fate_director, genre_gatekeeper, writer, reviewer。",
+  "档案官负责连续性和现实锚点；心理官负责人格惯性、欲望和恐惧；命运官负责外部压力、代价和机会；世界类型官负责克制离谱程度；编剧官负责用户可见文本；审稿官负责判定是否通过。",
+  "除 writer 外，每个职能最多 1-2 个短字段；数组最多 2 项；不要长篇解释。",
+  "硬规则：人物必须普通具体；事件必须小而有压力；选项不能替用户写结果；不要突然转成大灾难或超能力；不要美化黑暗选择。",
+  "必须只输出合法 JSON。不要 Markdown，不要代码块，不要 JSON 之外的文字。"
+].join("\n");
+
+function reviewerSchema() {
+  return {
+    pass: true,
+    scores: "简短评分",
+    blocking_issues: []
+  };
+}
+
+function buildCharacterMessages() {
+  return [
+    {
+      role: "system",
+      content: [
+        ROLE_SKILL_RULES,
+        "本次任务：随机生成一个可长期叙事的人物底盘。",
+        "内容必须克制精短：所有数组 2-4 项，每项 4-12 个汉字；summary 45-70 字；selves 每项 12-24 字。",
+        "JSON schema：",
+        JSON.stringify({
+          archivist: {
+            facts: []
+          },
+          psychologist: {
+            inertia: [],
+            desires: [],
+            fears: []
+          },
+          fate_director: {
+            pressure: ""
+          },
+          genre_gatekeeper: {
+            boundary: ""
+          },
+          writer: {
+            character: {
+              title: "",
+              tagline: "",
+              identity: "",
+              summary: "",
+              inertia: [],
+              desires: [],
+              fears: [],
+              moralLine: "",
+              relationPulls: [],
+              resources: [],
+              selves: {
+                subject: "",
+                object: "",
+                material: "",
+                social: "",
+                spiritual: "",
+                pure: ""
+              }
+            }
+          },
+          reviewer: reviewerSchema()
+        }, null, 2)
+      ].join("\n")
+    },
+    {
+      role: "user",
+      content: "请按 6 个职能顺序随机生成一个新的《蝴蝶人生》人物。不要名人，不要超能力，不要苦难堆砌。"
+    }
+  ];
+}
+
+function buildSeedMessages() {
+  return [
+    {
+      role: "system",
+      content: [
+        "你是《蝴蝶人生》的开局生成器。",
+        "一次生成一个普通人物和一个适配她的起点事件。",
+        "这是轻量开局，不需要输出 6 个 role skill；但要遵守：人物具体、现实克制、事件小而有压力、选择不替用户写结果。",
+        "不要输出目标形状之外的字段。句子短一点，保证 JSON 完整闭合。",
+        "只输出合法 JSON，不要 Markdown，不要解释。",
+        "字段：",
+        JSON.stringify({
+          character: {
+            title: "",
+            tagline: "",
+            identity: "",
+            summary: "",
+            inertia: [],
+            desires: [],
+            fears: [],
+            moralLine: "",
+            relationPulls: [],
+            resources: [],
+            selves: {
+              subject: "",
+              object: "",
+              material: "",
+              social: "",
+              spiritual: "",
+              pure: ""
+            }
+          },
+          event: {
+            text: "",
+            innerReaction: "",
+            pressure: "",
+            choices: [
+              { tag: "保持安全", text: "" },
+              { tag: "细微偏航", text: "" },
+              { tag: "冒险选择", text: "" }
+            ]
+          }
+        }, null, 2),
+        "长度限制：summary 35-55 字；event.text 35-60 字；innerReaction 20-36 字；pressure 20-36 字；数组 2-3 项。"
+      ].join("\n")
+    },
+    {
+      role: "user",
+      content: "请随机生成一个新的《蝴蝶人生》开局：人物 + 起点事件 + 3 个选择。不要名人，不要超能力，不要苦难堆砌。"
+    }
+  ];
+}
+
+function buildEventMessages(character) {
+  return [
+    {
+      role: "system",
+      content: [
+        "你是《蝴蝶人生》的起点事件生成器。",
+        "本次任务：根据人物底盘生成一个起点事件。",
+        "事件要具体、小而有压力，可以引发选择，但不要直接变成大灾难。",
+        "这是轻量生成，不需要输出 6 个 role skill。",
+        "内容必须精短：text 45-80 字，innerReaction 30-55 字，pressure 25-50 字。",
+        "choices 必须 3 个，分别是回到惯性、细微偏航、高偏航。",
+        "只输出合法 JSON，不要 Markdown，不要解释。",
+        "JSON schema：",
+        JSON.stringify({
+          text: "",
+          innerReaction: "",
+          pressure: "",
+          choices: [
+            { tag: "保持安全", text: "" },
+            { tag: "细微偏航", text: "" },
+            { tag: "冒险选择", text: "" }
+          ]
+        }, null, 2)
+      ].join("\n")
+    },
+    {
+      role: "user",
+      content: [
+        "人物底盘：",
+        formatCharacter(character),
+        "",
+        "请生成一个能开启故事、但仍在现实生活半径内的起点事件。"
+      ].join("\n")
+    }
+  ];
+}
+
+function buildChoiceMessages(story) {
+  const latest = story.beats[story.beats.length - 1] || {};
+  return [
+    {
+      role: "system",
+      content: [
+        ROLE_SKILL_RULES,
+        "本次任务：只生成下一步行动选项，不推进剧情，不写选择后的结果。",
+        "三个选项分别代表：回到惯性、细微偏航、高偏航。",
+        "选项必须具体、可点击、可继续叙事；不要重复上一轮选项。",
+        "JSON schema：",
+        JSON.stringify({
+          archivist: {
+            facts: [],
+            avoid: []
+          },
+          psychologist: {
+            current_inertia: "",
+            active_desire: "",
+            active_fear: ""
+          },
+          fate_director: {
+            pressure_to_answer: "",
+            available_costs: [],
+            available_opportunities: []
+          },
+          genre_gatekeeper: {
+            boundary: ""
+          },
+          writer: {
+            choices: [
+              { label: "回到惯性", intent: "return_to_inertia", text: "" },
+              { label: "轻微偏航", intent: "mild_deviation", text: "" },
+              { label: "高偏航", intent: "high_deviation", text: "" }
+            ]
+          },
+          reviewer: reviewerSchema()
+        }, null, 2)
+      ].join("\n")
+    },
+    {
+      role: "user",
+      content: [
+        "请按 6 个职能顺序为当前故事生成 3 个新选项。",
+        "",
+        "角色底盘：",
+        formatCharacter(story.character),
+        "",
+        "隐藏状态：",
+        JSON.stringify(story.hiddenStatus),
+        "",
+        "最近回合：",
+        recentBeats(story),
+        "",
+        "上一组选项：",
+        JSON.stringify(latest.choices || []),
+        "",
+        "开放线索：",
+        JSON.stringify(story.openThreads || [])
+      ].join("\n")
+    }
+  ];
+}
 
 function buildTurnMessages(story, action) {
   return [
@@ -209,6 +406,10 @@ function buildRetrospectMessages(story) {
 }
 
 module.exports = {
+  buildSeedMessages,
+  buildCharacterMessages,
+  buildEventMessages,
+  buildChoiceMessages,
   buildTurnMessages,
   buildRetrospectMessages
 };

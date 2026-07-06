@@ -18,11 +18,13 @@
     </view>
 
     <view class="field-group">
-      <text class="field-label">云函数 URL</text>
-      <input class="field" value="{{config.proxyUrl}}" placeholder="https://你的云函数地址" bindinput="onProxyUrlInput" />
+      <text class="field-label">AI 代理 HTTPS 域名</text>
+      <input class="field" value="{{config.proxyUrl}}" placeholder="https://你的正式自定义域名" bindinput="onProxyUrlInput" />
+      <text class="field-hint">云托管默认域名仅用于调试，正式版请使用已绑定的自定义域名。</text>
     </view>
 
     <button class="primary-button" bindtap="save">保存设置</button>
+    <button class="ghost-button" loading="{{testing}}" disabled="{{testing}}" bindtap="testAi">测试 AI 连接</button>
     <button class="ghost-button" bindtap="disableAi">关闭 AI</button>
   </view>
 </view>

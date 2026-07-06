@@ -31,13 +31,12 @@ Page({
       return;
     }
 
-    ai.streamChat({
+    ai.requestChat({
       config,
       messages: prompt.buildRetrospectMessages(story),
       temperature: 0.72,
-      onDelta: () => {
-        this.setData({ streamText: "回望正在慢慢显影..." });
-      }
+      maxTokens: 700,
+      timeout: 75000
     }).then((raw) => {
       this.setData({
         retrospect: narrative.parseRetrospect(raw, story),
@@ -50,7 +49,12 @@ Page({
         loading: false,
         streamText: ""
       });
+      wx.showToast({
+        title: "AI 失败，已用本地回顾",
+        icon: "none"
+      });
       console.warn("AI retrospect failed, fallback used:", error);
+      console.warn("AI error detail:", ai.describeError(error));
     });
   },
 

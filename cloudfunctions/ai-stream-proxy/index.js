@@ -4,6 +4,7 @@ const PORT = Number(process.env.PORT || 3000);
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1/chat/completions";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const DEFAULT_TIMEOUT_MS = Number(process.env.UPSTREAM_TIMEOUT_MS || 90000);
 
 function sendJson(res, statusCode, body) {
   res.writeHead(statusCode, {
@@ -27,6 +28,17 @@ function readBody(req) {
     req.on("end", () => resolve(body));
     req.on("error", reject);
   });
+}
+
+function extractAssistantText(payload) {
+  if (!payload) return "";
+  if (payload.output_text) return payload.output_text;
+  if (payload.choices && payload.choices.length) {
+    const choice = payload.choices[0];
+    if (choice.message && choice.message.content) return choice.message.content;
+    if (choice.text) return choice.text;
+  }
+  return "";
 }
 
 async function proxyOpenAI(req, res) {
@@ -69,9 +81,15 @@ async function proxyOpenAI(req, res) {
     return;
   }
 
+  let timeout;
   try {
+    const stream = payload.stream !== false;
+    const controller = new AbortController();
+    timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
     const upstream = await fetch(OPENAI_BASE_URL, {
       method: "POST",
+      signal: controller.signal,
       headers: {
         "content-type": "application/json",
         "authorization": `Bearer ${OPENAI_API_KEY}`
@@ -79,16 +97,33 @@ async function proxyOpenAI(req, res) {
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages,
-        stream: true,
+        stream,
+        max_tokens: typeof payload.max_tokens === "number" ? payload.max_tokens : undefined,
         temperature: typeof payload.temperature === "number" ? payload.temperature : 0.82
       })
     });
 
     if (!upstream.ok || !upstream.body) {
       const errorText = await upstream.text();
+      clearTimeout(timeout);
       sendJson(res, upstream.status || 502, {
         ok: false,
         error: errorText || "Upstream request failed"
+      });
+      return;
+    }
+
+    if (!stream) {
+      const text = await upstream.text();
+      clearTimeout(timeout);
+      let json = null;
+      try {
+        json = JSON.parse(text);
+      } catch (error) {}
+      sendJson(res, 200, {
+        ok: true,
+        content: extractAssistantText(json) || text,
+        raw: json || text
       });
       return;
     }
@@ -106,10 +141,12 @@ async function proxyOpenAI(req, res) {
       if (result.done) break;
       res.write(Buffer.from(result.value));
     }
+    clearTimeout(timeout);
     res.end();
   } catch (error) {
+    if (timeout) clearTimeout(timeout);
     if (!res.headersSent) {
-      sendJson(res, 502, { ok: false, error: error.message || "Proxy failed" });
+      sendJson(res, 502, { ok: false, error: error.name === "AbortError" ? "Upstream request timed out" : error.message || "Proxy failed" });
     } else {
       res.end();
     }

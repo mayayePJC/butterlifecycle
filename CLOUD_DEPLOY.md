@@ -36,12 +36,13 @@ PORT=3000
 ## 小程序配置
 
 1. 部署 `cloudfunctions/ai-stream-proxy`。
-2. 拿到公网 HTTPS URL，例如：
+2. 在云托管服务上绑定自己的 HTTPS 自定义域名。云托管默认域名仅用于测试，不能作为正式版小程序的 request 合法域名。
+3. 拿到正式代理 URL，例如：
    ```text
-   https://example.com/
+   https://ai.example.com/
    ```
-3. 在微信公众平台把这个域名加入 request 合法域名。
-4. 在小程序“设置”页开启 AI，填入这个云端代理 URL。
+4. 在微信公众平台把这个自定义域名加入 request 合法域名。
+5. 在小程序“设置”页开启 AI，填入这个云端代理 URL。
 
 ## 本地测试代理
 

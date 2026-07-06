@@ -93,6 +93,23 @@ function parseDelta(json) {
   return "";
 }
 
+function describeError(error) {
+  const raw = error && error.message ? error.message : String(error || "AI 请求失败");
+  let message = raw.replace(/^AI 请求失败：?/, "").trim();
+  try {
+    const jsonStart = message.indexOf("{");
+    if (jsonStart >= 0) {
+      const parsed = JSON.parse(message.slice(jsonStart));
+      if (parsed.error) {
+        if (typeof parsed.error === "string") message = parsed.error;
+        else if (parsed.error.message) message = parsed.error.message;
+        else message = JSON.stringify(parsed.error);
+      }
+    }
+  } catch (ignore) {}
+  return message || "AI 请求失败";
+}
+
 function streamChat(options) {
   const config = options.config || {};
   const messages = options.messages || [];
@@ -203,6 +220,68 @@ function streamChat(options) {
   });
 }
 
+function requestChat(options) {
+  const config = options.config || {};
+  const messages = options.messages || [];
+  const temperature = typeof options.temperature === "number" ? options.temperature : 0.82;
+  const timeout = typeof options.timeout === "number" ? options.timeout : 90000;
+  const maxTokens = typeof options.maxTokens === "number" ? options.maxTokens : undefined;
+
+  if (!config.enabled || !config.proxyUrl) {
+    return Promise.reject(new Error("AI 未启用或缺少云端代理地址"));
+  }
+
+  return new Promise(function (resolve, reject) {
+    wx.request({
+      url: config.proxyUrl,
+      method: "POST",
+      timeout,
+      header: {
+        "content-type": "application/json"
+      },
+      data: {
+        messages,
+        temperature,
+        stream: false,
+        max_tokens: maxTokens
+      },
+      success(res) {
+        if (res.statusCode >= 400) {
+          const message = typeof res.data === "string" ? res.data : JSON.stringify(res.data || {});
+          reject(new Error("AI 请求失败：" + res.statusCode + " " + message));
+          return;
+        }
+        if (typeof res.data === "string") {
+          resolve(res.data);
+          return;
+        }
+        if (res.data && res.data.ok === false) {
+          reject(new Error(res.data.error || "AI 请求失败"));
+          return;
+        }
+        resolve((res.data && (res.data.content || res.data.text)) || JSON.stringify(res.data || {}));
+      },
+      fail(err) {
+        reject(new Error(err.errMsg || "AI 请求失败"));
+      }
+    });
+  });
+}
+
+function testConnection(config) {
+  return streamChat({
+    config,
+    temperature: 0,
+    messages: [
+      { role: "system", content: "你是连接测试服务。只回复 OK。" },
+      { role: "user", content: "请回复 OK" }
+    ]
+  });
+}
+
 module.exports = {
-  streamChat
+  streamChat,
+  requestChat,
+  testConnection,
+  describeError
 };

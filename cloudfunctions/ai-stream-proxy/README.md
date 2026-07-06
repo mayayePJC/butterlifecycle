@@ -31,4 +31,4 @@ content-type: application/json
 
 这个函数需要部署成可公网 HTTPS 访问、支持流式响应的 HTTP 云函数或云托管服务。普通 `wx.cloud.callFunction` 不适合这里，因为它拿不到逐段返回的流。
 
-部署后，把 HTTPS 地址填到小程序设置页的“云函数 URL”。正式版需要在微信公众平台配置 request 合法域名。
+部署后，调试阶段可以临时使用云托管默认 HTTPS 地址。正式发布前需要绑定自己的 HTTPS 自定义域名，把该域名加入微信公众平台 request 合法域名，再填到小程序设置页的“AI 代理 HTTPS 域名”。

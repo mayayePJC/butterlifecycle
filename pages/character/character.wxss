@@ -17,13 +17,7 @@
 }
 
 .vertical-stamp {
-  position: absolute;
-  top: 56rpx;
-  right: 42rpx;
-  width: 32rpx;
-  color: rgba(140, 126, 106, 0.28);
-  font-size: 24rpx;
-  line-height: 44rpx;
+  display: none;
 }
 
 .card-head {

@@ -64,11 +64,12 @@ button::after {
 .app-title {
   max-width: 470rpx;
   color: #181f19;
-  font-size: 40rpx;
-  line-height: 52rpx;
+  font-size: 32rpx;
+  line-height: 40rpx;
   font-weight: 700;
-  letter-spacing: 4rpx;
+  letter-spacing: 2rpx;
   text-align: center;
+  white-space: nowrap;
 }
 
 .icon-button {
