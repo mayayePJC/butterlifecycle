@@ -25,8 +25,12 @@ Page({
     const config = storage.readAiConfig();
     if (!config.enabled || !config.proxyUrl) {
       this.setData({
-        retrospect: narrative.fallbackRetrospect(story),
         loading: false
+      });
+      wx.showModal({
+        title: "AI 回望失败",
+        content: "AI 未启用或缺少云端代理地址。",
+        showCancel: false
       });
       return;
     }
@@ -38,22 +42,26 @@ Page({
       maxTokens: 700,
       timeout: 75000
     }).then((raw) => {
+      const retrospect = narrative.parseRetrospect(raw, story);
+      if (!retrospect) {
+        throw new Error("AI 回望格式不完整，没有生成回望。");
+      }
       this.setData({
-        retrospect: narrative.parseRetrospect(raw, story),
+        retrospect,
         loading: false,
         streamText: ""
       });
     }).catch((error) => {
       this.setData({
-        retrospect: narrative.fallbackRetrospect(story),
         loading: false,
         streamText: ""
       });
-      wx.showToast({
-        title: "AI 失败，已用本地回顾",
-        icon: "none"
+      wx.showModal({
+        title: "AI 回望失败",
+        content: ai.describeError(error),
+        showCancel: false
       });
-      console.warn("AI retrospect failed, fallback used:", error);
+      console.warn("AI retrospect failed:", error);
       console.warn("AI error detail:", ai.describeError(error));
     });
   },

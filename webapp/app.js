@@ -26,10 +26,12 @@ function save() {
 
 function toast(message) {
   const node = $("#toast");
-  node.textContent = message;
+  const text = String(message || "");
+  node.textContent = text;
   node.classList.add("show");
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => node.classList.remove("show"), 2200);
+  const duration = Math.min(12000, Math.max(2200, text.length * 80));
+  toast.timer = setTimeout(() => node.classList.remove("show"), duration);
 }
 
 function setStep(step) {
@@ -156,7 +158,7 @@ async function chooseAction(action) {
     renderStory();
     save();
   } catch (error) {
-    toast(error.message || "AI 生成失败，请重试");
+    toast("AI 生成失败：" + (error.message || "请检查代理、Key 或模型输出。"));
   } finally {
     setLoading(false);
   }

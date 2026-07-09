@@ -115,6 +115,7 @@ function streamChat(options) {
   const messages = options.messages || [];
   const onDelta = options.onDelta || function () {};
   const temperature = typeof options.temperature === "number" ? options.temperature : 0.82;
+  const topP = typeof options.topP === "number" ? options.topP : undefined;
 
   if (!config.enabled || !config.proxyUrl) {
     return Promise.reject(new Error("AI 未启用或缺少云端代理地址"));
@@ -183,7 +184,8 @@ function streamChat(options) {
       },
       data: {
         messages,
-        temperature
+        temperature,
+        top_p: topP
       },
       success(res) {
         if (res.statusCode >= 400) {
@@ -226,6 +228,8 @@ function requestChat(options) {
   const temperature = typeof options.temperature === "number" ? options.temperature : 0.82;
   const timeout = typeof options.timeout === "number" ? options.timeout : 90000;
   const maxTokens = typeof options.maxTokens === "number" ? options.maxTokens : undefined;
+  const topP = typeof options.topP === "number" ? options.topP : undefined;
+  const responseFormat = options.jsonMode ? { type: "json_object" } : undefined;
 
   if (!config.enabled || !config.proxyUrl) {
     return Promise.reject(new Error("AI 未启用或缺少云端代理地址"));
@@ -243,7 +247,9 @@ function requestChat(options) {
         messages,
         temperature,
         stream: false,
-        max_tokens: maxTokens
+        max_tokens: maxTokens,
+        top_p: topP,
+        response_format: responseFormat
       },
       success(res) {
         if (res.statusCode >= 400) {

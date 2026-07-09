@@ -203,6 +203,35 @@ function tryParseJson(raw) {
   return null;
 }
 
+function coerceText(value) {
+  if (Array.isArray(value)) {
+    return value.map(coerceText).filter(Boolean).join("、").trim();
+  }
+  if (value && typeof value === "object") {
+    return coerceText(
+      value.text ||
+      value.story_text ||
+      value.scene ||
+      value.narrative ||
+      value.content ||
+      value.description ||
+      value.summary ||
+      value.title ||
+      value.name ||
+      value.label
+    );
+  }
+  return String(value || "").trim();
+}
+
+function firstText() {
+  for (let index = 0; index < arguments.length; index += 1) {
+    const text = coerceText(arguments[index]);
+    if (text) return text;
+  }
+  return "";
+}
+
 function extractSection(raw, name) {
   const text = raw || "";
   const startToken = "【" + name + "】";
@@ -213,16 +242,30 @@ function extractSection(raw, name) {
   return (next < 0 ? rest : rest.slice(0, next)).trim();
 }
 
+function pickSkillChoices(writer) {
+  const source = writer || {};
+  const choices = source.choices ||
+    source.next_choices ||
+    source.options ||
+    source.actions ||
+    source.next_actions ||
+    source.action_options;
+  return Array.isArray(choices) ? choices : [];
+}
+
 function parseSkillChoices(writer) {
-  const choices = Array.isArray(writer && writer.choices) ? writer.choices : [];
+  const choices = pickSkillChoices(writer);
   return choices.slice(0, 3).map(function (choice, index) {
+    const tag = coerceText(choice && (choice.label || choice.tag || choice.intent || choice.name || choice.type));
+    const text = coerceText(choice && (choice.text || choice.action || choice.description || choice.content || choice.choice));
+    if (!tag || !text) return null;
     return {
-      tag: choice.label || choice.tag || ("选项" + (index + 1)),
-      intent: choice.intent || "",
-      text: choice.text || ""
+      tag,
+      intent: coerceText(choice && choice.intent),
+      text
     };
   }).filter(function (choice) {
-    return !!choice.text;
+    return !!choice;
   });
 }
 
@@ -233,7 +276,37 @@ function parseSkillTurn(raw, story) {
 
   const writer = payload.writer;
   const choices = parseSkillChoices(writer);
-  if (!writer.story_text || !writer.inner_reaction || !writer.reality_or_temptation || choices.length < 3) {
+  const scene = firstText(
+    writer.story_text,
+    writer.scene,
+    writer.external_story,
+    writer.external_result,
+    writer.narrative,
+    writer.text,
+    writer.story,
+    writer.result,
+    writer.content
+  );
+  const innerReaction = firstText(
+    writer.inner_reaction,
+    writer.innerReaction,
+    writer.inner,
+    writer.internal_reaction,
+    writer.psychological_reaction,
+    writer.reaction,
+    writer.feeling
+  );
+  const pressure = firstText(
+    writer.reality_or_temptation,
+    writer.pressure,
+    writer.reality_pressure,
+    writer.realityPullback,
+    writer.reality_pullback,
+    writer.temptation,
+    writer.conflict,
+    writer.cost
+  );
+  if (!scene || !innerReaction || !pressure || choices.length < 3) {
     return null;
   }
 
@@ -245,9 +318,9 @@ function parseSkillTurn(raw, story) {
   return {
     id: makeId("beat"),
     turn: story.beats.length + 1,
-    scene: writer.story_text,
-    innerReaction: writer.inner_reaction,
-    pressure: writer.reality_or_temptation,
+    scene,
+    innerReaction,
+    pressure,
     choices,
     stateNote: [
       "惯性:" + normalizeNumber(delta.inertia_strength),
@@ -304,6 +377,35 @@ function parseTurn(raw, story, actionInput) {
     stateNote: statusText,
     aiRaw: raw
   };
+}
+
+function listKeys(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "无";
+  const keys = Object.keys(value).slice(0, 16);
+  return keys.length ? keys.join(", ") : "空对象";
+}
+
+function compactExcerpt(raw) {
+  return String(raw || "").replace(/\s+/g, " ").trim().slice(0, 240);
+}
+
+function describeTurnParseFailure(raw) {
+  const expected = "需要 writer.story_text/scene/narrative、writer.inner_reaction/innerReaction、writer.reality_or_temptation/pressure，以及 writer.choices/next_choices 的 3 个有效选项。";
+  const payload = tryParseJson(raw);
+  const excerpt = compactExcerpt(raw);
+  if (!payload) {
+    return "AI 下一回合格式不完整：" + expected + (excerpt ? " 返回片段：" + excerpt : "");
+  }
+  if (payload.reviewer && payload.reviewer.pass === false) {
+    const issues = Array.isArray(payload.reviewer.blocking_issues) ? payload.reviewer.blocking_issues.filter(Boolean).join("；") : "";
+    return "AI 下一回合被审稿官退回：" + (issues || "reviewer.pass=false") + (excerpt ? " 返回片段：" + excerpt : "");
+  }
+  return [
+    "AI 下一回合格式不完整：" + expected,
+    "实际顶层字段：" + listKeys(payload),
+    "writer 字段：" + listKeys(payload.writer),
+    excerpt ? "返回片段：" + excerpt : ""
+  ].filter(Boolean).join(" ");
 }
 
 function appendBeat(story, actionInput, beatInput) {
@@ -417,6 +519,7 @@ module.exports = {
   buildInitialStory,
   parseTurn,
   parseSkillTurn,
+  describeTurnParseFailure,
   appendBeat,
   parseRetrospect
 };

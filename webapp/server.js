@@ -1,7 +1,6 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
 
 const narrative = require("../utils/narrative");
 const prompt = require("../utils/prompt");
@@ -142,6 +141,86 @@ function requireTextArray(value, label, max) {
   return list;
 }
 
+function coerceText(value) {
+  if (Array.isArray(value)) {
+    return value.map(coerceText).filter(Boolean).join("、").trim();
+  }
+  if (value && typeof value === "object") {
+    return coerceText(value.text || value.title || value.name || value.label || value.identity || value.role || value.occupation || value.summary || value.description || value.profile || value.content);
+  }
+  return String(value || "").trim();
+}
+
+function firstText() {
+  for (let index = 0; index < arguments.length; index += 1) {
+    const text = coerceText(arguments[index]);
+    if (text) return text;
+  }
+  return "";
+}
+
+function normalizePayloadObject(value, textKey) {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  const text = coerceText(value);
+  return text ? { [textKey]: text } : {};
+}
+
+function normalizeTextArray(value, label, max) {
+  let list = [];
+  if (Array.isArray(value)) {
+    list = value.map(coerceText).filter(Boolean);
+  } else {
+    const text = coerceText(value);
+    if (text) list = text.split(/[，,、;；]/).map(item => item.trim()).filter(Boolean);
+  }
+  if (!list.length) throw new Error(label + " 缺少有效文本。");
+  return list.slice(0, max || 5);
+}
+
+function pickCharacterPayload(payload) {
+  const source = payload || {};
+  const writer = source.writer || {};
+  const seed = source.seed || source.opening || writer.seed || writer.opening || {};
+  const candidate = source.character ||
+    writer.character ||
+    seed.character ||
+    source.persona ||
+    writer.persona ||
+    source.protagonist ||
+    writer.protagonist ||
+    source.main_character ||
+    writer.main_character ||
+    source.character_profile ||
+    writer.character_profile ||
+    source.profile_card ||
+    writer.profile_card ||
+    source.profile ||
+    writer.profile ||
+    (writer.identity || writer.title || writer.summary ? writer : null) ||
+    source;
+  return normalizePayloadObject(candidate, "identity");
+}
+
+function pickEventPayload(payload) {
+  const source = payload || {};
+  const writer = source.writer || {};
+  const seed = source.seed || source.opening || writer.seed || writer.opening || {};
+  const candidate = source.event ||
+    writer.event ||
+    seed.event ||
+    writer.start_event ||
+    source.start_event ||
+    writer.opening_event ||
+    source.opening_event ||
+    writer.trigger_event ||
+    source.trigger_event ||
+    writer.inciting_incident ||
+    source.inciting_incident ||
+    (writer.event_text || writer.scene || writer.situation ? writer : null) ||
+    source;
+  return normalizePayloadObject(candidate, "text");
+}
+
 function requireThreeChoices(choices, label) {
   if (!Array.isArray(choices)) throw new Error(label + " 必须提供 3 个选择。");
   const normalized = choices.slice(0, 3).map((choice, index) => {
@@ -151,7 +230,7 @@ function requireThreeChoices(choices, label) {
     return {
       tag: requireText(choice && (choice.tag || choice.label), label + " 第 " + (index + 1) + " 个选择标签"),
       intent: String(choice && choice.intent || "").trim(),
-      text: requireText(choice && choice.text, label + " 第 " + (index + 1) + " 个选择")
+      text: requireText(choice && (choice.text || choice.action || choice.description || choice.content), label + " 第 " + (index + 1) + " 个选择")
     };
   });
   if (normalized.length !== 3) throw new Error(label + " 必须正好生成 3 个选择。");
@@ -159,47 +238,80 @@ function requireThreeChoices(choices, label) {
 }
 
 function normalizeAiCharacter(payload) {
-  const source = (payload && payload.writer && payload.writer.character) || payload || {};
-  const selves = source.selves || {};
+  const source = pickCharacterPayload(payload);
+  const selves = source.selves || source.six_selves || {};
+  const summaryCandidate = firstText(source.summary, source.description, source.profile, source.background);
+  const identity = requireText(firstText(
+    source.identity,
+    source.role,
+    source.occupation,
+    source.profession,
+    source.job,
+    source.name,
+    source.title,
+    source.label,
+    source.protagonist,
+    source.character_base,
+    source.tagline,
+    source.subtitle,
+    source.short,
+    summaryCandidate.slice(0, 24)
+  ), "人物身份");
+  const summary = requireText(firstText(summaryCandidate, identity), "人物摘要");
+  const title = firstText(source.title, source.name, source.label, identity);
+  const tagline = firstText(source.tagline, source.subtitle, source.one_liner, source.oneLiner, source.short, summary.slice(0, 28));
   return {
     id: "ai_character_" + Date.now(),
-    title: requireText(source.title, "人物标题"),
-    tagline: requireText(source.tagline, "人物短句"),
-    identity: requireText(source.identity, "人物身份"),
-    summary: requireText(source.summary, "人物摘要"),
-    inertia: requireTextArray(source.inertia, "人格惯性", 5),
-    desires: requireTextArray(source.desires, "深层欲望", 4),
-    fears: requireTextArray(source.fears, "核心恐惧", 4),
-    moralLine: requireText(source.moralLine, "道德底线"),
-    relationPulls: requireTextArray(source.relationPulls, "关系牵引", 5),
-    resources: requireTextArray(source.resources, "资源状态", 5),
+    title: requireText(title, "人物标题"),
+    tagline: requireText(tagline, "人物短句"),
+    identity,
+    summary,
+    inertia: normalizeTextArray(source.inertia || source.personality_inertia, "人格惯性", 5),
+    desires: normalizeTextArray(source.desires || source.deep_desires || source.wants, "深层欲望", 4),
+    fears: normalizeTextArray(source.fears || source.core_fears || source.shadows, "核心恐惧", 4),
+    moralLine: requireText(firstText(source.moralLine, source.moral_line, source.moral_boundaries), "道德底线"),
+    relationPulls: normalizeTextArray(source.relationPulls || source.relation_pulls || source.relationships, "关系牵引", 5),
+    resources: normalizeTextArray(source.resources || source.resource_state, "资源状态", 5),
     selves: {
-      subject: requireText(selves.subject, "主体我"),
-      object: requireText(selves.object, "客体我"),
-      material: requireText(selves.material, "物质自我"),
-      social: requireText(selves.social, "社会自我"),
-      spiritual: requireText(selves.spiritual, "精神自我"),
-      pure: requireText(selves.pure, "纯粹自我")
+      subject: requireText(firstText(selves.subject, selves.i_self), "主体我"),
+      object: requireText(firstText(selves.object, selves.me_self), "客体我"),
+      material: requireText(firstText(selves.material, selves.material_self), "物质自我"),
+      social: requireText(firstText(selves.social, selves.social_self), "社会自我"),
+      spiritual: requireText(firstText(selves.spiritual, selves.spiritual_self), "精神自我"),
+      pure: requireText(firstText(selves.pure, selves.pure_ego, source.personality_constant), "纯粹自我")
     }
   };
 }
 
 function normalizeAiEvent(payload) {
-  const source = (payload && payload.writer && payload.writer.event) || payload || {};
+  const source = pickEventPayload(payload);
+  const text = requireText(firstText(
+    source.text,
+    source.event_text,
+    source.scene,
+    source.situation,
+    source.summary,
+    source.description,
+    source.premise,
+    source.trigger,
+    source.trigger_event,
+    source.inciting_incident,
+    source.opening,
+    source.context
+  ), "起点事件");
   return {
     id: "ai_event_" + Date.now(),
-    text: requireText(source.text, "起点事件"),
-    innerReaction: requireText(source.innerReaction, "起点内心反应"),
-    pressure: requireText(source.pressure, "起点现实压力"),
+    text,
+    innerReaction: requireText(firstText(source.innerReaction, source.inner_reaction, source.reaction, source.feeling), "起点内心反应"),
+    pressure: requireText(firstText(source.pressure, source.reality_pressure, source.reality_or_temptation, source.conflict, source.cost), "起点现实压力"),
     choices: requireThreeChoices(source.choices, "起点事件")
   };
 }
 
 function normalizeAiSeed(payload) {
-  const source = payload || {};
   return {
-    character: normalizeAiCharacter(source.character || {}),
-    event: normalizeAiEvent(source.event || {})
+    character: normalizeAiCharacter(payload),
+    event: normalizeAiEvent(payload)
   };
 }
 
@@ -325,7 +437,8 @@ async function chatJson(messages, label, options, shape) {
       const repairText = await chat(buildPlainJsonRepairMessages(rawText, shape, label), {
         maxTokens: options.repairMaxTokens || options.maxTokens || 900,
         temperature: 0.15,
-        timeout: options.timeout || 75000
+        timeout: options.timeout || 75000,
+        jsonMode: true
       });
       return requireJson(repairText, label);
     } catch (repairError) {
@@ -342,85 +455,45 @@ async function chatRoleSkill(messages, label, options) {
     const repairText = await chat(buildRoleSkillRepairMessages(rawText, label), {
       maxTokens: Math.max(options.repairMaxTokens || options.maxTokens || 900, 1100),
       temperature: 0.2,
-      timeout: options.timeout || 75000
+      timeout: options.timeout || 75000,
+      jsonMode: true
     });
     return requireRoleSkillJson(repairText, label);
   }
 }
 
-function chatViaPowerShell(body, timeout) {
-  return new Promise((resolve, reject) => {
-    const script = [
-      "$ErrorActionPreference='Stop'",
-      "[Console]::InputEncoding=[Text.Encoding]::UTF8",
-      "[Console]::OutputEncoding=[Text.Encoding]::UTF8",
-      "$body = [Console]::In.ReadToEnd()",
-      "$headers = @{ Authorization = 'Bearer ' + $env:OPENAI_API_KEY; 'Content-Type' = 'application/json' }",
-      "$response = Invoke-WebRequest -Uri $env:OPENAI_BASE_URL -Method Post -Headers $headers -Body $body -UseBasicParsing -TimeoutSec " + Math.ceil(timeout / 1000),
-      "$response.Content"
-    ].join("; ");
-
-    const child = spawn("powershell.exe", ["-NoProfile", "-Command", script], {
-      env: Object.assign({}, process.env, {
-        OPENAI_API_KEY,
-        OPENAI_BASE_URL
-      })
-    });
-    let stdout = "";
-    let stderr = "";
-    const timer = setTimeout(() => {
-      child.kill();
-      reject(new Error("PowerShell request timed out"));
-    }, timeout + 5000);
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-    child.stdout.on("data", chunk => { stdout += chunk; });
-    child.stderr.on("data", chunk => { stderr += chunk; });
-    child.on("error", error => {
-      clearTimeout(timer);
-      reject(error);
-    });
-    child.on("close", code => {
-      clearTimeout(timer);
-      if (code !== 0) {
-        reject(new Error((stderr || "PowerShell request failed").trim()));
-        return;
-      }
-      resolve(stdout);
-    });
-    child.stdin.end(body, "utf8");
-  });
-}
-
 async function chat(messages, options = {}) {
-  if (!hasUsableApiKey()) return "";
+  if (!hasUsableApiKey()) throw new Error(missingKeyMessage());
   const timeout = options.timeout || 75000;
-  const body = JSON.stringify({
+  const requestBody = {
     model: OPENAI_MODEL,
     messages,
     stream: false,
     temperature: typeof options.temperature === "number" ? options.temperature : 0.82,
     max_tokens: options.maxTokens || 1200
-  });
+  };
+  if (typeof options.topP === "number") {
+    requestBody.top_p = options.topP;
+  }
+  if (options.jsonMode) {
+    requestBody.response_format = { type: "json_object" };
+  }
+  const body = JSON.stringify(requestBody);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
-    let text;
-    try {
-      const upstream = await fetch(OPENAI_BASE_URL, {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "content-type": "application/json",
-          "authorization": `Bearer ${OPENAI_API_KEY}`
-        },
-        body
-      });
-      text = await upstream.text();
-      if (!upstream.ok) throw new Error(text || "Upstream request failed");
-    } catch (error) {
-      console.warn("Node fetch failed, retrying via PowerShell:", describeError(error));
-      text = await chatViaPowerShell(body, timeout);
+    const upstream = await fetch(OPENAI_BASE_URL, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body
+    });
+    const text = await upstream.text();
+    if (!upstream.ok) {
+      throw new Error("AI 上游请求失败：" + (text || upstream.status));
     }
     let json = null;
     try {
@@ -433,6 +506,11 @@ async function chat(messages, options = {}) {
       return extractAssistantText(json);
     }
     return text;
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      throw new Error("AI 请求超时，请检查模型、网络或代理配置。");
+    }
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -457,9 +535,11 @@ async function handleApi(req, res) {
       return;
     }
     const aiPayload = await chatJson(prompt.buildSeedMessages(), "开局生成", {
-      maxTokens: 1600,
-      repairMaxTokens: 1100,
-      temperature: 0.82
+      maxTokens: 2400,
+      repairMaxTokens: 1800,
+      temperature: 0.95,
+      topP: 0.98,
+      jsonMode: true
     }, seedShape());
     const seed = normalizeAiSeed(aiPayload);
     sendJson(res, 200, { ok: true, character: seed.character, event: seed.event });
@@ -471,7 +551,7 @@ async function handleApi(req, res) {
       sendJson(res, 400, { ok: false, error: missingKeyMessage() });
       return;
     }
-    const skillOutput = await chatRoleSkill(prompt.buildCharacterMessages(), "人物生成", { maxTokens: 1250, repairMaxTokens: 1350, temperature: 0.86 });
+    const skillOutput = await chatRoleSkill(prompt.buildCharacterMessages(), "人物生成", { maxTokens: 1500, repairMaxTokens: 1500, temperature: 0.92, topP: 0.98, jsonMode: true });
     const character = normalizeAiCharacter(skillOutput);
     sendJson(res, 200, { ok: true, character, skillOutput });
     return;
@@ -489,9 +569,11 @@ async function handleApi(req, res) {
     }
     const character = payload.character || {};
     const aiPayload = await chatJson(prompt.buildEventMessages(character), "事件生成", {
-      maxTokens: 850,
-      repairMaxTokens: 700,
-      temperature: 0.8
+      maxTokens: 1100,
+      repairMaxTokens: 900,
+      temperature: 0.88,
+      topP: 0.96,
+      jsonMode: true
     }, eventShape());
     const event = normalizeAiEvent(aiPayload);
     sendJson(res, 200, { ok: true, event });
@@ -522,13 +604,19 @@ async function handleApi(req, res) {
       return;
     }
     const action = payload.action || { tag: "自定义行动", text: payload.text || "" };
-    const rawText = await chat(prompt.buildTurnMessages(story, action), { maxTokens: 1400 });
+    const rawText = await chat(prompt.buildTurnMessages(story, action), {
+      maxTokens: 2600,
+      temperature: 0.82,
+      topP: 0.96,
+      timeout: 75000,
+      jsonMode: true
+    });
     if (!rawText) throw new Error("AI 没有返回下一回合内容，请重试。");
     const beat = narrative.parseTurn(rawText, story, action);
-    if (!beat) throw new Error("AI 下一回合格式不完整，请重试。");
+    if (!beat) throw new Error(narrative.describeTurnParseFailure(rawText));
     beat.choices = requireThreeChoices(beat.choices, "下一回合");
     const next = narrative.appendBeat(story, action, beat);
-    sendJson(res, 200, { ok: true, story: next, beat, aiUsed: !!beat.skillOutput });
+    sendJson(res, 200, { ok: true, story: next, beat, aiUsed: true });
     return;
   }
 
@@ -543,7 +631,7 @@ async function handleApi(req, res) {
       return;
     }
     const latest = story.beats[story.beats.length - 1];
-    const skillOutput = await chatRoleSkill(prompt.buildChoiceMessages(story), "选项生成", { maxTokens: 900, repairMaxTokens: 1050, temperature: 0.86 });
+    const skillOutput = await chatRoleSkill(prompt.buildChoiceMessages(story), "选项生成", { maxTokens: 1100, repairMaxTokens: 1100, temperature: 0.85, topP: 0.96, jsonMode: true });
     const choices = normalizeAiChoices(skillOutput, story);
     latest.choices = choices;
     sendJson(res, 200, { ok: true, story, choices, skillOutput });

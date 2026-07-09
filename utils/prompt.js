@@ -20,6 +20,96 @@ function recentBeats(story) {
   }).join("\n\n");
 }
 
+function randomItem(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function shuffle(list) {
+  const copy = list.slice();
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(Math.random() * (index + 1));
+    const value = copy[index];
+    copy[index] = copy[other];
+    copy[other] = value;
+  }
+  return copy;
+}
+
+function buildSeedDiversityBrief() {
+  const worlds = [
+    "近未来市井：新技术已经日常化，但麻烦仍然很生活",
+    "民俗奇想：地方规矩、旧传说或仪式真的会影响日常",
+    "宇宙边境日常：空间站、月面设施或轨道集市里的小人物",
+    "梦境官僚制：梦、记忆、影子或名字被登记、审核、租借",
+    "生态异变：天气、植物、潮汐或季节有了可协商的规则",
+    "时间错位现实：某段时间、某一天或某个年龄被临时借走",
+    "物件社会：旧物、票据、钥匙、房间或机器保留自己的要求",
+    "地下城市：地铁、隧道、旧商场或避难层形成另一套秩序",
+    "小镇怪谈现实化：怪事存在，但影响首先落在账单、关系和责任上",
+    "低魔日常：奇异能力稀少、昂贵、有手续，并且要付现实代价"
+  ];
+  const identities = [
+    "梦境边检员",
+    "月面温室临时工",
+    "旧物听证员",
+    "影子修补师",
+    "失物招领站夜班员",
+    "记忆账本校对员",
+    "地下电梯检修员",
+    "天气档案助理",
+    "时间借贷柜员",
+    "迁徙城市地图员",
+    "无人剧院放映员",
+    "海底车站广播员",
+    "民俗办事处实习生",
+    "废弃游乐园看守",
+    "轨道集市送件人",
+    "梦后清洁员"
+  ];
+  const pressures = [
+    "收到一份系统判给她的陌生责任",
+    "发现某个熟悉的人或物正在被规则抹去",
+    "必须在公开手续和私下救人之间选择",
+    "一个小错误即将牵出昂贵代价",
+    "她掌握的信息会让某段关系失衡",
+    "一件旧物要求她偿还从未听说过的债",
+    "一次普通交接暴露出世界规则的漏洞",
+    "她被要求替另一个版本的自己签字",
+    "一个温柔请求和一条冷冰冰的规定冲突",
+    "她发现别人习以为常的秩序正在伤害某个人"
+  ];
+  const tones = [
+    "温柔荒诞",
+    "悬疑童话",
+    "赛博市井",
+    "民俗偏航",
+    "宇宙日常",
+    "黑色幽默",
+    "潮湿奇谈",
+    "明亮怪诞"
+  ];
+  const avoid = shuffle([
+    "便利店",
+    "店长",
+    "加班顶班",
+    "凌晨消息",
+    "失联同事",
+    "星辰学园",
+    "见习法师",
+    "预言",
+    "跨位面阴谋",
+    "被选中的救世主"
+  ]).slice(0, 5);
+  return {
+    random_seed: Date.now().toString(36) + "-" + Math.floor(Math.random() * 1000000).toString(36),
+    world_mode: randomItem(worlds),
+    identity_direction: randomItem(identities),
+    opening_pressure: randomItem(pressures),
+    tone: randomItem(tones),
+    avoid
+  };
+}
+
 function buildSkillInput(story, action) {
   const latest = story.beats[story.beats.length - 1] || {};
   return {
@@ -65,8 +155,9 @@ const TURN_SYSTEM_PROMPT = [
   "你是微信小程序《蝴蝶人生》的叙事引擎。",
   "你必须按 6 个职能顺序工作，但只做一次模型调用。",
   "职能顺序：档案官 -> 心理官 -> 命运官 -> 世界类型官 -> 编剧官 -> 审稿官。",
-  "除 writer 外，每个职能字段必须很短，数组最多 2 项。",
+  "除 writer 外，每个职能字段必须极短，数组最多 1 项。",
   "硬规则：角色不能突然变成另一个人；一次勇敢不等于永久改变；偏航会回弹；离谱事件必须偿还因果债；世界异化度只负责开门，不负责强推；每 3-5 步需要现实回拽；黑暗走向必须呈现代价，不能美化。",
+  "题材边界：保持开局的世界规则，可以奇想、低魔、近未来或荒诞，但不能突然换类型；奇异设定必须具体、有限、有代价。",
   "不要暴露内部数值和规则给用户；不要输出操作性违法指导、露骨内容或仇恨内容。",
   "必须只输出合法 JSON。不要 Markdown，不要代码块，不要 JSON 之外的文字。",
   "JSON schema：",
@@ -93,9 +184,9 @@ const TURN_SYSTEM_PROMPT = [
   "    \"causal_debt_required\": []",
   "  },",
   "  \"writer\": {",
-  "    \"story_text\": \"70-120 字，具体写外部结果\",",
-  "    \"inner_reaction\": \"35-70 字，写角色如何理解这次选择\",",
-  "    \"reality_or_temptation\": \"25-60 字，写现实回拽或诱惑\",",
+  "    \"story_text\": \"45-80 字，具体写外部结果\",",
+  "    \"inner_reaction\": \"20-40 字，写角色如何理解这次选择\",",
+  "    \"reality_or_temptation\": \"16-32 字，写现实回拽或诱惑\",",
   "    \"choices\": [",
   "      { \"label\": \"\", \"intent\": \"return_to_inertia\", \"text\": \"\" },",
   "      { \"label\": \"\", \"intent\": \"mild_deviation\", \"text\": \"\" },",
@@ -117,7 +208,8 @@ const ROLE_SKILL_RULES = [
   "输出顶层必须恰好包含 6 个字段：archivist, psychologist, fate_director, genre_gatekeeper, writer, reviewer。",
   "档案官负责连续性和现实锚点；心理官负责人格惯性、欲望和恐惧；命运官负责外部压力、代价和机会；世界类型官负责克制离谱程度；编剧官负责用户可见文本；审稿官负责判定是否通过。",
   "除 writer 外，每个职能最多 1-2 个短字段；数组最多 2 项；不要长篇解释。",
-  "硬规则：人物必须普通具体；事件必须小而有压力；选项不能替用户写结果；不要突然转成大灾难或超能力；不要美化黑暗选择。",
+  "硬规则：人物必须具体、有生活压力和人格惯性；事件必须小而有压力；选项不能替用户写结果；不要突然转成大灾难；不要美化黑暗选择。",
+  "题材边界：允许奇想、低魔、近未来、民俗、梦境、宇宙日常等，但禁止套用泛 fantasy 模板、救世主模板、宏大战争模板或名人。",
   "必须只输出合法 JSON。不要 Markdown，不要代码块，不要 JSON 之外的文字。"
 ].join("\n");
 
@@ -130,13 +222,16 @@ function reviewerSchema() {
 }
 
 function buildCharacterMessages() {
+  const diversity = buildSeedDiversityBrief();
   return [
     {
       role: "system",
       content: [
         ROLE_SKILL_RULES,
         "本次任务：随机生成一个可长期叙事的人物底盘。",
-        "内容必须克制精短：所有数组 2-4 项，每项 4-12 个汉字；summary 45-70 字；selves 每项 12-24 字。",
+        "内容必须精短但陌生：所有数组 2-4 项，每项 4-12 个汉字；summary 38-58 字；selves 每项 12-24 字。",
+        "随机创作坐标必须显著影响人物：",
+        JSON.stringify(diversity),
         "JSON schema：",
         JSON.stringify({
           archivist: {
@@ -181,19 +276,25 @@ function buildCharacterMessages() {
     },
     {
       role: "user",
-      content: "请按 6 个职能顺序随机生成一个新的《蝴蝶人生》人物。不要名人，不要超能力，不要苦难堆砌。"
+      content: "请按 6 个职能顺序随机生成一个新的《蝴蝶人生》人物。要和常见职业完全不同，可以异想天开，但不要名人、救世主或苦难堆砌。"
     }
   ];
 }
 
 function buildSeedMessages() {
+  const diversity = buildSeedDiversityBrief();
   return [
     {
       role: "system",
       content: [
         "你是《蝴蝶人生》的开局生成器。",
-        "一次生成一个普通人物和一个适配她的起点事件。",
-        "这是轻量开局，不需要输出 6 个 role skill；但要遵守：人物具体、现实克制、事件小而有压力、选择不替用户写结果。",
+        "一次生成一个人物和一个适配她的起点事件，每次都要像完全不同的故事。",
+        "这是轻量开局，不需要输出 6 个 role skill；但要遵守：人物具体、选择有压力、奇想有限且有代价、选择不替用户写结果。",
+        "允许异想天开：低魔、近未来、民俗、梦境、宇宙边境、荒诞制度、怪谈日常都可以。",
+        "禁止偷懒模板：不要重复便利店/加班/凌晨消息；不要星辰学园、见习法师、预言、跨位面阴谋、救世主血统、宏大战争。",
+        "人物必须是小人物或边缘职业，不要王族、名人、天选主角。奇异身份也要有日常工作、关系牵引和现实代价。",
+        "随机创作坐标必须显著影响结果：",
+        JSON.stringify(diversity),
         "不要输出目标形状之外的字段。句子短一点，保证 JSON 完整闭合。",
         "只输出合法 JSON，不要 Markdown，不要解释。",
         "字段：",
@@ -229,12 +330,12 @@ function buildSeedMessages() {
             ]
           }
         }, null, 2),
-        "长度限制：summary 35-55 字；event.text 35-60 字；innerReaction 20-36 字；pressure 20-36 字；数组 2-3 项。"
+        "长度限制：title 4-12 字；tagline 8-18 字；summary 28-44 字；event.text 32-52 字；innerReaction 16-30 字；pressure 16-30 字；数组每项 2-10 字且 2 项。"
       ].join("\n")
     },
     {
       role: "user",
-      content: "请随机生成一个新的《蝴蝶人生》开局：人物 + 起点事件 + 3 个选择。不要名人，不要超能力，不要苦难堆砌。"
+      content: "请随机生成一个全新的《蝴蝶人生》开局：人物 + 起点事件 + 3 个选择。要大胆、陌生、异想天开，但不要套模板，不要苦难堆砌。"
     }
   ];
 }
@@ -246,7 +347,7 @@ function buildEventMessages(character) {
       content: [
         "你是《蝴蝶人生》的起点事件生成器。",
         "本次任务：根据人物底盘生成一个起点事件。",
-        "事件要具体、小而有压力，可以引发选择，但不要直接变成大灾难。",
+        "事件要具体、小而有压力，可以奇异、荒诞或怪诞，但不要直接变成大灾难。",
         "这是轻量生成，不需要输出 6 个 role skill。",
         "内容必须精短：text 45-80 字，innerReaction 30-55 字，pressure 25-50 字。",
         "choices 必须 3 个，分别是回到惯性、细微偏航、高偏航。",
@@ -270,7 +371,7 @@ function buildEventMessages(character) {
         "人物底盘：",
         formatCharacter(character),
         "",
-        "请生成一个能开启故事、但仍在现实生活半径内的起点事件。"
+        "请生成一个能开启故事、并明显贴合人物世界规则的起点事件。"
       ].join("\n")
     }
   ];
@@ -354,7 +455,8 @@ function buildTurnMessages(story, action) {
         "最近回合文本摘要：",
         recentBeats(story),
         "",
-        "请让这一回合鲜活、克制、可继续选择。"
+        "请让这一回合鲜活、克制、可继续选择。",
+        "所有非 writer 字段宁短勿长，避免 JSON 被截断。"
       ].join("\n")
     }
   ];

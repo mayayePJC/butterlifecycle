@@ -80,6 +80,9 @@ async function proxyOpenAI(req, res) {
     sendJson(res, 400, { ok: false, error: "Missing messages" });
     return;
   }
+  const responseFormat = payload.response_format && typeof payload.response_format === "object"
+    ? payload.response_format
+    : undefined;
 
   let timeout;
   try {
@@ -99,6 +102,8 @@ async function proxyOpenAI(req, res) {
         messages,
         stream,
         max_tokens: typeof payload.max_tokens === "number" ? payload.max_tokens : undefined,
+        response_format: responseFormat,
+        top_p: typeof payload.top_p === "number" ? payload.top_p : undefined,
         temperature: typeof payload.temperature === "number" ? payload.temperature : 0.82
       })
     });

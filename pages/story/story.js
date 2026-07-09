@@ -61,27 +61,25 @@ Page({
     const story = this.data.story;
     const config = storage.readAiConfig();
     let finished = false;
-    let fallbackTimer = null;
 
     const finishWithBeat = (beat) => {
       if (finished) return;
       finished = true;
-      if (fallbackTimer) clearTimeout(fallbackTimer);
       const next = narrative.appendBeat(story, action, beat);
       storage.saveStory(next);
       this.setData({ streaming: false, streamText: "" });
       this.refresh(next);
     };
 
-    const finishWithFallback = (message) => {
-      const beat = narrative.fallbackTurn(story, action);
-      finishWithBeat(beat);
-      if (message) {
-        wx.showToast({
-          title: message,
-          icon: "none"
-        });
-      }
+    const failWithAiError = (message) => {
+      if (finished) return;
+      finished = true;
+      this.setData({ streaming: false, streamText: "" });
+      wx.showModal({
+        title: "AI 生成失败",
+        content: message || "AI 没有成功返回下一回合，请检查代理、Key 或模型输出。",
+        showCancel: false
+      });
     };
 
     this.setData({
@@ -92,27 +90,27 @@ Page({
     });
 
     if (!config.enabled || !config.proxyUrl) {
-      setTimeout(() => {
-        finishWithFallback("");
-      }, 360);
+      failWithAiError("AI 未启用或缺少云端代理地址。");
       return;
     }
-
-    fallbackTimer = setTimeout(() => {
-      finishWithFallback("AI 太久未返回，已用本地剧情");
-    }, AI_STORY_TIMEOUT_MS + 5000);
 
     ai.requestChat({
       config,
       messages: prompt.buildTurnMessages(story, action),
-      maxTokens: 1200,
-      timeout: AI_STORY_TIMEOUT_MS
+      maxTokens: 2600,
+      temperature: 0.82,
+      topP: 0.96,
+      timeout: AI_STORY_TIMEOUT_MS,
+      jsonMode: true
     }).then((raw) => {
       const beat = narrative.parseTurn(raw, story, action);
+      if (!beat) {
+        throw new Error(narrative.describeTurnParseFailure(raw));
+      }
       finishWithBeat(beat);
     }).catch((error) => {
-      finishWithFallback(ai.describeError(error).slice(0, 18) || "AI 失败，已用本地剧情");
-      console.warn("AI story failed, fallback used:", error);
+      failWithAiError(ai.describeError(error));
+      console.warn("AI story failed:", error);
       console.warn("AI error detail:", ai.describeError(error));
     });
   },
