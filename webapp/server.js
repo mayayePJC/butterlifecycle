@@ -86,6 +86,19 @@ function extractAssistantText(payload) {
   return "";
 }
 
+function extractStreamDelta(payload) {
+  if (!payload) return "";
+  if (payload.type === "response.output_text.delta" && payload.delta) return String(payload.delta);
+  if (typeof payload.delta === "string") return payload.delta;
+  if (payload.choices && payload.choices.length) {
+    const choice = payload.choices[0];
+    if (choice.delta && typeof choice.delta.content === "string") return choice.delta.content;
+    if (choice.message && typeof choice.message.content === "string") return choice.message.content;
+    if (typeof choice.text === "string") return choice.text;
+  }
+  return "";
+}
+
 function hasUsableApiKey() {
   return !!OPENAI_API_KEY && /^[\x20-\x7E]+$/.test(OPENAI_API_KEY) && !OPENAI_API_KEY.includes("替换");
 }
@@ -342,9 +355,9 @@ function seedShape() {
       innerReaction: "",
       pressure: "",
       choices: [
-        { tag: "保持安全", text: "" },
-        { tag: "细微偏航", text: "" },
-        { tag: "冒险选择", text: "" }
+        { tag: "顺着惯性", text: "" },
+        { tag: "试探偏离", text: "" },
+        { tag: "押上代价", text: "" }
       ]
     }
   };
@@ -516,6 +529,94 @@ async function chat(messages, options = {}) {
   }
 }
 
+async function streamChat(messages, options, onDelta) {
+  if (!hasUsableApiKey()) throw new Error(missingKeyMessage());
+  const timeout = options.timeout || 75000;
+  const requestBody = {
+    model: OPENAI_MODEL,
+    messages,
+    stream: true,
+    temperature: typeof options.temperature === "number" ? options.temperature : 0.82,
+    max_tokens: options.maxTokens || 1200
+  };
+  if (typeof options.topP === "number") {
+    requestBody.top_p = options.topP;
+  }
+  if (options.jsonMode) {
+    requestBody.response_format = { type: "json_object" };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const upstream = await fetch(OPENAI_BASE_URL, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+    if (!upstream.ok || !upstream.body) {
+      const text = await upstream.text();
+      throw new Error("AI 上游请求失败：" + (text || upstream.status));
+    }
+
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let fullText = "";
+
+    function handleLine(line) {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      const data = trimmed.indexOf("data:") === 0 ? trimmed.slice(5).trim() : trimmed;
+      if (!data || data === "[DONE]") return;
+      let parsed = null;
+      try {
+        parsed = JSON.parse(data);
+      } catch (error) {
+        return;
+      }
+      if (parsed && parsed.error) {
+        throw new Error(parsed.error.message || JSON.stringify(parsed.error));
+      }
+      const delta = extractStreamDelta(parsed);
+      if (delta) {
+        fullText += delta;
+        onDelta(delta, fullText);
+      }
+    }
+
+    while (true) {
+      const result = await reader.read();
+      if (result.done) break;
+      buffer += decoder.decode(result.value, { stream: true });
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop();
+      for (const line of lines) handleLine(line);
+    }
+    buffer += decoder.decode();
+    if (buffer.trim()) {
+      const lines = buffer.split(/\r?\n/);
+      for (const line of lines) handleLine(line);
+    }
+    return fullText;
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      throw new Error("AI 请求超时，请检查模型、网络或代理配置。");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function sendNdjson(res, body) {
+  res.write(JSON.stringify(body) + "\n");
+}
+
 async function handleApi(req, res) {
   const raw = await readBody(req);
   const payload = raw ? JSON.parse(raw) : {};
@@ -605,10 +706,10 @@ async function handleApi(req, res) {
     }
     const action = payload.action || { tag: "自定义行动", text: payload.text || "" };
     const rawText = await chat(prompt.buildTurnMessages(story, action), {
-      maxTokens: 2600,
-      temperature: 0.82,
-      topP: 0.96,
-      timeout: 75000,
+      maxTokens: 1200,
+      temperature: 0.78,
+      topP: 0.94,
+      timeout: 45000,
       jsonMode: true
     });
     if (!rawText) throw new Error("AI 没有返回下一回合内容，请重试。");
@@ -617,6 +718,46 @@ async function handleApi(req, res) {
     beat.choices = requireThreeChoices(beat.choices, "下一回合");
     const next = narrative.appendBeat(story, action, beat);
     sendJson(res, 200, { ok: true, story: next, beat, aiUsed: true });
+    return;
+  }
+
+  if (req.url === "/api/turn-stream") {
+    if (!hasUsableApiKey()) {
+      sendJson(res, 400, { ok: false, error: missingKeyMessage() });
+      return;
+    }
+    const story = normalizeStory(payload.story);
+    if (!story) {
+      sendJson(res, 400, { ok: false, error: "Missing story" });
+      return;
+    }
+    const action = payload.action || { tag: "自定义行动", text: payload.text || "" };
+    res.writeHead(200, {
+      "content-type": "application/x-ndjson; charset=utf-8",
+      "cache-control": "no-cache, no-transform",
+      "connection": "keep-alive"
+    });
+    try {
+      const rawText = await streamChat(prompt.buildTurnMessages(story, action), {
+        maxTokens: 1200,
+        temperature: 0.78,
+        topP: 0.94,
+        timeout: 45000,
+        jsonMode: true
+      }, (delta) => {
+        sendNdjson(res, { type: "delta", text: delta });
+      });
+      if (!rawText) throw new Error("AI 没有返回下一回合内容，请重试。");
+      const beat = narrative.parseTurn(rawText, story, action);
+      if (!beat) throw new Error(narrative.describeTurnParseFailure(rawText));
+      beat.choices = requireThreeChoices(beat.choices, "下一回合");
+      const next = narrative.appendBeat(story, action, beat);
+      sendNdjson(res, { type: "done", ok: true, story: next, beat, aiUsed: true });
+      res.end();
+    } catch (error) {
+      sendNdjson(res, { type: "error", ok: false, error: error.message || "AI 生成失败" });
+      res.end();
+    }
     return;
   }
 

@@ -13,10 +13,11 @@ function formatCharacter(character) {
   ].join("\n");
 }
 
-function recentBeats(story) {
-  return story.beats.slice(-5).map(function (beat) {
+function recentBeats(story, limit) {
+  return story.beats.slice(-(limit || 5)).map(function (beat) {
     const action = beat.action ? "选择：" + beat.action.tag + " / " + beat.action.text + "\n" : "";
-    return "第 " + beat.turn + " 回合\n" + action + "外部剧情：" + beat.scene + "\n内心：" + beat.innerReaction + "\n现实回拽：" + beat.pressure;
+    const state = beat.stateNote ? "\n状态：" + beat.stateNote : "";
+    return "第 " + beat.turn + " 回合\n" + action + "外部剧情：" + beat.scene + "\n内心：" + beat.innerReaction + "\n现实回拽：" + beat.pressure + state;
   }).join("\n\n");
 }
 
@@ -33,6 +34,46 @@ function shuffle(list) {
     copy[other] = value;
   }
   return copy;
+}
+
+function classifyAction(action) {
+  const text = ((action && action.intent) || "") + " " + ((action && action.tag) || "") + " " + ((action && action.text) || "");
+  if (/return_to_inertia|回到惯性|顺着惯性|保持安全|退回/.test(text)) {
+    return "顺着惯性：短期更安全，但会加深旧生活的牵引，并让机会慢慢变窄。";
+  }
+  if (/high_deviation|高偏航|押上代价|冒险|越界/.test(text)) {
+    return "押上代价：可以猛烈偏离，但后续必须出现反扑、代价或关系断裂，不能立刻胜利。";
+  }
+  return "试探偏离：只迈出可持续的一步，后续需要坚持、反复和具体代价才会沉积成人生转向。";
+}
+
+function buildPacingContext(story, action) {
+  const currentTurn = story.beats.length || 1;
+  const nextTurn = currentTurn + 1;
+  const arcSteps = ["偏离开始", "惯性回拽", "代价谈判", "暂时定型"];
+  const arcStep = arcSteps[Math.max(0, (nextTurn - 2) % arcSteps.length)];
+  let lifePhase = "开局惯性";
+  let timeScale = "数小时到数周";
+  if (nextTurn >= 5 && nextTurn <= 8) {
+    lifePhase = "第一次转型";
+    timeScale = "数周到一年";
+  } else if (nextTurn >= 9 && nextTurn <= 12) {
+    lifePhase = "中段代价";
+    timeScale = "数月到三年";
+  } else if (nextTurn >= 13) {
+    lifePhase = "晚期回收";
+    timeScale = "一年到数年";
+  }
+  return {
+    target_length: "12-16 回合走完一生，不要 6 回合内结局。",
+    next_turn: nextTurn,
+    life_phase: lifePhase,
+    arc_step: arcStep,
+    time_scale: timeScale,
+    selected_action_pressure: classifyAction(action),
+    core_rule: "重大转向需要 偏离开始 -> 惯性回拽 -> 代价谈判 -> 暂时定型 这 2-4 回合逐步兑现；一次选择只能开启转向，不能立刻改命。",
+    choice_rule: "下一组选项必须分别是：顺着惯性、试探偏离、押上代价；三者都要是可执行行动，不是结局描述。"
+  };
 }
 
 function buildSeedDiversityBrief() {
@@ -115,29 +156,22 @@ function buildSkillInput(story, action) {
   return {
     character_base: {
       identity: story.character.identity,
-      inertia: story.character.inertia,
-      deep_desires: story.character.desires,
-      core_fears: story.character.fears,
-      moral_boundaries: [story.character.moralLine],
-      resources: story.character.resources,
-      relationships: story.character.relationPulls,
-      six_selves: {
-        i_self: story.character.selves.subject,
-        me_self: story.character.selves.object,
-        material_self: story.character.selves.material,
-        social_self: story.character.selves.social,
-        spiritual_self: story.character.selves.spiritual,
-        pure_ego: story.character.selves.pure
-      },
-      personality_constant: story.character.selves.pure
+      summary: story.character.summary,
+      inertia: (story.character.inertia || []).slice(0, 3),
+      deep_desires: (story.character.desires || []).slice(0, 2),
+      core_fears: (story.character.fears || []).slice(0, 2),
+      moral_line: story.character.moralLine,
+      relationships: (story.character.relationPulls || []).slice(0, 3),
+      pure_self: story.character.selves && story.character.selves.pure
     },
     story_state: {
       turn_index: story.beats.length,
+      life_pacing: buildPacingContext(story, action),
       current_scene: latest.scene || story.event.text,
-      known_facts: story.knownFacts || [],
-      open_threads: story.openThreads || [],
-      recent_choices: story.importantChoices || [],
-      causal_debt: story.causalDebt || [],
+      known_facts: (story.knownFacts || []).slice(-4),
+      open_threads: (story.openThreads || []).slice(-4),
+      recent_choices: (story.importantChoices || []).slice(-3),
+      causal_debt: (story.causalDebt || []).slice(-3),
       hidden_state: {
         inertia_strength: story.hiddenStatus.inertia,
         instant_deviation: story.hiddenStatus.momentDeviation,
@@ -147,58 +181,41 @@ function buildSkillInput(story, action) {
       }
     },
     user_action: "[" + action.tag + "] " + action.text,
-    previous_options: latest.choices || []
+    previous_options: (latest.choices || []).map(function (choice) {
+      return { tag: choice.tag || choice.label, text: choice.text };
+    })
   };
 }
 
 const TURN_SYSTEM_PROMPT = [
   "你是微信小程序《蝴蝶人生》的叙事引擎。",
-  "你必须按 6 个职能顺序工作，但只做一次模型调用。",
-  "职能顺序：档案官 -> 心理官 -> 命运官 -> 世界类型官 -> 编剧官 -> 审稿官。",
-  "除 writer 外，每个职能字段必须极短，数组最多 1 项。",
-  "硬规则：角色不能突然变成另一个人；一次勇敢不等于永久改变；偏航会回弹；离谱事件必须偿还因果债；世界异化度只负责开门，不负责强推；每 3-5 步需要现实回拽；黑暗走向必须呈现代价，不能美化。",
+  "内部按 6 个职能检查：档案官连续性、心理官惯性、命运官代价、世界类型官边界、编剧官文本、审稿官通过。",
+  "但输出必须极简，只允许 writer 和 reviewer 两个顶层字段；不要输出 archivist、psychologist、fate_director、genre_gatekeeper。",
+  "叙事节奏：默认 12-16 回合走完一生；每个重大转向需要 2-4 回合，依次经历偏离开始、惯性回拽、代价谈判、暂时定型。",
+  "硬规则：角色不能突然变成另一个人；一次勇敢不等于永久改变；选择只能开启转向，不能立刻兑现终局；偏航必须回弹；离谱事件必须偿还因果债；黑暗走向必须呈现代价，不能美化。",
+  "跨度规则：每回合允许推进一段生活时间，但要按 life_pacing.time_scale 控制；可以写“几周后/半年后”，但必须保留执行选择的困难和旧生活的回拉。",
+  "选项规则：每轮 3 个选择必须分别是顺着惯性、试探偏离、押上代价。它们都必须是具体行动，不是人生结果；不能写成一键辞职、一夜成名、彻底自由、直接结局。",
   "题材边界：保持开局的世界规则，可以奇想、低魔、近未来或荒诞，但不能突然换类型；奇异设定必须具体、有限、有代价。",
   "不要暴露内部数值和规则给用户；不要输出操作性违法指导、露骨内容或仇恨内容。",
+  "总输出尽量短，目标 420-720 个汉字，避免 JSON 被截断。",
   "必须只输出合法 JSON。不要 Markdown，不要代码块，不要 JSON 之外的文字。",
   "JSON schema：",
-  "{",
-  "  \"archivist\": { \"confirmed_facts\": [], \"open_threads\": [] },",
-  "  \"psychologist\": {",
-  "    \"inertia_relation\": \"aligned | mildly_against | strongly_against | boundary_breaking\",",
-  "    \"dominant_emotion\": \"\",",
-  "    \"state_delta_suggestion\": {",
-  "      \"inertia_strength\": 0,",
-  "      \"instant_deviation\": 0,",
-  "      \"personality_sediment\": 0,",
-  "      \"reality_pressure\": 0,",
-  "      \"world_strangeness\": 0",
-  "    }",
-  "  },",
-  "  \"fate_director\": {",
-  "    \"cost\": \"\",",
-  "    \"reality_pullback\": \"\",",
-  "    \"thread_to_advance\": \"\"",
-  "  },",
-  "  \"genre_gatekeeper\": {",
-  "    \"max_strangeness_this_turn\": \"\",",
-  "    \"causal_debt_required\": []",
-  "  },",
-  "  \"writer\": {",
-  "    \"story_text\": \"45-80 字，具体写外部结果\",",
-  "    \"inner_reaction\": \"20-40 字，写角色如何理解这次选择\",",
-  "    \"reality_or_temptation\": \"16-32 字，写现实回拽或诱惑\",",
-  "    \"choices\": [",
-  "      { \"label\": \"\", \"intent\": \"return_to_inertia\", \"text\": \"\" },",
-  "      { \"label\": \"\", \"intent\": \"mild_deviation\", \"text\": \"\" },",
-  "      { \"label\": \"\", \"intent\": \"high_deviation\", \"text\": \"\" }",
-  "    ]",
-  "  },",
-  "  \"reviewer\": {",
-  "    \"pass\": true,",
-  "    \"scores\": \"简短评分\",",
-  "    \"blocking_issues\": []",
-  "  }",
-  "}"
+  JSON.stringify({
+    writer: {
+      story_text: "70-120 字，写选择被执行后的时间推进、外部变化和未完成的转向",
+      inner_reaction: "24-44 字，写角色怎样理解这次偏离或顺从，以及她为何难以坚持",
+      reality_or_temptation: "24-48 字，写旧生活、关系、资源或世界规则怎样把她拽回去",
+      choices: [
+        { label: "顺着惯性", intent: "return_to_inertia", text: "" },
+        { label: "试探偏离", intent: "mild_deviation", text: "" },
+        { label: "押上代价", intent: "high_deviation", text: "" }
+      ]
+    },
+    reviewer: {
+      pass: true,
+      blocking_issues: []
+    }
+  })
 ].join("\n");
 
 const ROLE_SKILL_RULES = [
@@ -208,7 +225,7 @@ const ROLE_SKILL_RULES = [
   "输出顶层必须恰好包含 6 个字段：archivist, psychologist, fate_director, genre_gatekeeper, writer, reviewer。",
   "档案官负责连续性和现实锚点；心理官负责人格惯性、欲望和恐惧；命运官负责外部压力、代价和机会；世界类型官负责克制离谱程度；编剧官负责用户可见文本；审稿官负责判定是否通过。",
   "除 writer 外，每个职能最多 1-2 个短字段；数组最多 2 项；不要长篇解释。",
-  "硬规则：人物必须具体、有生活压力和人格惯性；事件必须小而有压力；选项不能替用户写结果；不要突然转成大灾难；不要美化黑暗选择。",
+  "硬规则：人物必须具体、有生活压力和人格惯性；事件必须小而有压力；选项不能替用户写结果；一次选择不能立刻改命；不要突然转成大灾难；不要美化黑暗选择。",
   "题材边界：允许奇想、低魔、近未来、民俗、梦境、宇宙日常等，但禁止套用泛 fantasy 模板、救世主模板、宏大战争模板或名人。",
   "必须只输出合法 JSON。不要 Markdown，不要代码块，不要 JSON 之外的文字。"
 ].join("\n");
@@ -290,6 +307,8 @@ function buildSeedMessages() {
         "你是《蝴蝶人生》的开局生成器。",
         "一次生成一个人物和一个适配她的起点事件，每次都要像完全不同的故事。",
         "这是轻量开局，不需要输出 6 个 role skill；但要遵守：人物具体、选择有压力、奇想有限且有代价、选择不替用户写结果。",
+        "节奏目标：一局默认 12-16 回合；开局只给出人生惯性的第一道裂缝，不要直接给出命运结论。",
+        "三个起点选项必须分别是：顺着惯性、试探偏离、押上代价；都要是可执行行动，不能是结局描述。",
         "允许异想天开：低魔、近未来、民俗、梦境、宇宙边境、荒诞制度、怪谈日常都可以。",
         "禁止偷懒模板：不要重复便利店/加班/凌晨消息；不要星辰学园、见习法师、预言、跨位面阴谋、救世主血统、宏大战争。",
         "人物必须是小人物或边缘职业，不要王族、名人、天选主角。奇异身份也要有日常工作、关系牵引和现实代价。",
@@ -324,9 +343,9 @@ function buildSeedMessages() {
             innerReaction: "",
             pressure: "",
             choices: [
-              { tag: "保持安全", text: "" },
-              { tag: "细微偏航", text: "" },
-              { tag: "冒险选择", text: "" }
+              { tag: "顺着惯性", text: "" },
+              { tag: "试探偏离", text: "" },
+              { tag: "押上代价", text: "" }
             ]
           }
         }, null, 2),
@@ -335,7 +354,7 @@ function buildSeedMessages() {
     },
     {
       role: "user",
-      content: "请随机生成一个全新的《蝴蝶人生》开局：人物 + 起点事件 + 3 个选择。要大胆、陌生、异想天开，但不要套模板，不要苦难堆砌。"
+      content: "请随机生成一个全新的《蝴蝶人生》开局：人物 + 起点事件 + 3 个选择。要大胆、陌生、异想天开，但开局只打开一条长期人生裂缝，不要一上来写成结局。"
     }
   ];
 }
@@ -350,7 +369,7 @@ function buildEventMessages(character) {
         "事件要具体、小而有压力，可以奇异、荒诞或怪诞，但不要直接变成大灾难。",
         "这是轻量生成，不需要输出 6 个 role skill。",
         "内容必须精短：text 45-80 字，innerReaction 30-55 字，pressure 25-50 字。",
-        "choices 必须 3 个，分别是回到惯性、细微偏航、高偏航。",
+        "choices 必须 3 个，分别是顺着惯性、试探偏离、押上代价；都只能写行动，不能写结果。",
         "只输出合法 JSON，不要 Markdown，不要解释。",
         "JSON schema：",
         JSON.stringify({
@@ -358,9 +377,9 @@ function buildEventMessages(character) {
           innerReaction: "",
           pressure: "",
           choices: [
-            { tag: "保持安全", text: "" },
-            { tag: "细微偏航", text: "" },
-            { tag: "冒险选择", text: "" }
+            { tag: "顺着惯性", text: "" },
+            { tag: "试探偏离", text: "" },
+            { tag: "押上代价", text: "" }
           ]
         }, null, 2)
       ].join("\n")
@@ -385,8 +404,8 @@ function buildChoiceMessages(story) {
       content: [
         ROLE_SKILL_RULES,
         "本次任务：只生成下一步行动选项，不推进剧情，不写选择后的结果。",
-        "三个选项分别代表：回到惯性、细微偏航、高偏航。",
-        "选项必须具体、可点击、可继续叙事；不要重复上一轮选项。",
+        "三个选项分别代表：顺着惯性、试探偏离、押上代价。",
+        "选项必须具体、可点击、可继续叙事；不要重复上一轮选项；不要写成直接成功、直接失败或人生结局。",
         "JSON schema：",
         JSON.stringify({
           archivist: {
@@ -408,9 +427,9 @@ function buildChoiceMessages(story) {
           },
           writer: {
             choices: [
-              { label: "回到惯性", intent: "return_to_inertia", text: "" },
-              { label: "轻微偏航", intent: "mild_deviation", text: "" },
-              { label: "高偏航", intent: "high_deviation", text: "" }
+              { label: "顺着惯性", intent: "return_to_inertia", text: "" },
+              { label: "试探偏离", intent: "mild_deviation", text: "" },
+              { label: "押上代价", intent: "high_deviation", text: "" }
             ]
           },
           reviewer: reviewerSchema()
@@ -450,12 +469,15 @@ function buildTurnMessages(story, action) {
         "请按 6 个职能顺序处理输入，并返回严格 JSON。",
         "",
         "结构化输入：",
-        JSON.stringify(buildSkillInput(story, action), null, 2),
+        JSON.stringify(buildSkillInput(story, action)),
         "",
         "最近回合文本摘要：",
-        recentBeats(story),
+        recentBeats(story, 3),
         "",
-        "请让这一回合鲜活、克制、可继续选择。",
+        "本回合节奏约束：",
+        JSON.stringify(buildPacingContext(story, action)),
+        "",
+        "请让这一回合鲜活、克制、可继续选择；推进一段人生时间，但不要把转向立刻写成终局。",
         "所有非 writer 字段宁短勿长，避免 JSON 被截断。"
       ].join("\n")
     }

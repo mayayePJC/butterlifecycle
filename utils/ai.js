@@ -110,12 +110,64 @@ function describeError(error) {
   return message || "AI 请求失败";
 }
 
+function readPartialJsonString(raw, keys) {
+  for (let keyIndex = 0; keyIndex < keys.length; keyIndex += 1) {
+    const marker = "\"" + keys[keyIndex] + "\"";
+    const start = raw.indexOf(marker);
+    if (start < 0) continue;
+    const colon = raw.indexOf(":", start + marker.length);
+    if (colon < 0) continue;
+    const quote = raw.indexOf("\"", colon + 1);
+    if (quote < 0) continue;
+    let value = "";
+    let escaping = false;
+    for (let index = quote + 1; index < raw.length; index += 1) {
+      const char = raw[index];
+      if (escaping) {
+        if (char === "n") value += "\n";
+        else if (char === "t") value += "\t";
+        else value += char;
+        escaping = false;
+      } else if (char === "\\") {
+        escaping = true;
+      } else if (char === "\"") {
+        break;
+      } else {
+        value += char;
+      }
+    }
+    if (value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function previewTurnText(raw) {
+  const text = String(raw || "");
+  try {
+    const json = JSON.parse(text);
+    const writer = json.writer || json;
+    return [
+      writer.story_text || writer.scene || writer.narrative || writer.text || writer.story,
+      writer.inner_reaction || writer.innerReaction || writer.inner,
+      writer.reality_or_temptation || writer.pressure || writer.reality_pressure
+    ].filter(Boolean).join("\n\n");
+  } catch (ignore) {}
+  return [
+    readPartialJsonString(text, ["story_text", "scene", "narrative", "story"]),
+    readPartialJsonString(text, ["inner_reaction", "innerReaction", "inner"]),
+    readPartialJsonString(text, ["reality_or_temptation", "pressure", "reality_pressure"])
+  ].filter(Boolean).join("\n\n");
+}
+
 function streamChat(options) {
   const config = options.config || {};
   const messages = options.messages || [];
   const onDelta = options.onDelta || function () {};
   const temperature = typeof options.temperature === "number" ? options.temperature : 0.82;
+  const timeout = typeof options.timeout === "number" ? options.timeout : 120000;
+  const maxTokens = typeof options.maxTokens === "number" ? options.maxTokens : undefined;
   const topP = typeof options.topP === "number" ? options.topP : undefined;
+  const responseFormat = options.jsonMode ? { type: "json_object" } : undefined;
 
   if (!config.enabled || !config.proxyUrl) {
     return Promise.reject(new Error("AI 未启用或缺少云端代理地址"));
@@ -178,14 +230,17 @@ function streamChat(options) {
       url: config.proxyUrl,
       method: "POST",
       enableChunked: true,
-      timeout: 120000,
+      timeout,
       header: {
         "content-type": "application/json"
       },
       data: {
         messages,
         temperature,
-        top_p: topP
+        stream: true,
+        max_tokens: maxTokens,
+        top_p: topP,
+        response_format: responseFormat
       },
       success(res) {
         if (res.statusCode >= 400) {
@@ -289,5 +344,6 @@ module.exports = {
   streamChat,
   requestChat,
   testConnection,
-  describeError
+  describeError,
+  previewTurnText
 };

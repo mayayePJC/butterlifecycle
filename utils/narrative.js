@@ -93,7 +93,7 @@ function buildInitialStory(character, event) {
     innerReaction: event.innerReaction,
     pressure: event.pressure,
     choices,
-    stateNote: "起点事件仍在生活半径内，偏航尚未沉积。"
+    stateNote: "开局惯性已经显形，转向尚未开始沉积。"
   };
 
   return {
@@ -132,16 +132,16 @@ function estimateDelta(action, turnCount) {
     worldStrangeness: 0
   };
 
-  if (/保持安全|逃避|隐瞒|讨好/.test(tag)) {
+  if (/顺着惯性|回到惯性|保持安全|逃避|隐瞒|讨好/.test(tag)) {
     delta.inertia += 5;
     delta.momentDeviation -= 7;
     delta.realityPressure -= 2;
-  } else if (/细微偏航|说出真话|保护弱者|求助/.test(tag)) {
+  } else if (/试探偏离|细微偏航|说出真话|保护弱者|求助/.test(tag)) {
     delta.inertia -= 4;
     delta.momentDeviation += 11;
     delta.sedimentation += 4;
     delta.realityPressure += 6;
-  } else if (/冒险|越界|追逐|悬疑/.test(tag)) {
+  } else if (/押上代价|高偏航|冒险|越界|追逐|悬疑/.test(tag)) {
     delta.inertia -= 7;
     delta.momentDeviation += 16;
     delta.sedimentation += 5;

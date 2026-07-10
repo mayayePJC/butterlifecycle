@@ -222,7 +222,9 @@ const retrospectText = [
     assert.strictEqual(turn.data.ok, true);
     assert.strictEqual(turn.data.story.beats.length, 2);
     assert.strictEqual(turn.data.beat.choices.length, 3);
-    assert.strictEqual(turnRequestBody.max_tokens, 2600);
+    assert.strictEqual(turnRequestBody.max_tokens, 1200);
+    assert.strictEqual(turnRequestBody.temperature, 0.78);
+    assert.strictEqual(turnRequestBody.top_p, 0.94);
     assert.deepStrictEqual(turnRequestBody.response_format, { type: "json_object" });
 
     const retrospect = await postJson(baseUrl, "/api/retrospect", {

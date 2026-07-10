@@ -3,7 +3,7 @@ const narrative = require("../../utils/narrative");
 const prompt = require("../../utils/prompt");
 const ai = require("../../utils/ai");
 
-const AI_STORY_TIMEOUT_MS = 75000;
+const AI_STORY_TIMEOUT_MS = 45000;
 
 Page({
   data: {
@@ -84,7 +84,7 @@ Page({
 
     this.setData({
       streaming: true,
-      streamText: "AI 正在续写，这一段可能需要几十秒...",
+      streamText: "AI 正在续写...",
       customAction: "",
       scrollIntoView: "streaming"
     });
@@ -94,14 +94,23 @@ Page({
       return;
     }
 
-    ai.requestChat({
+    ai.streamChat({
       config,
       messages: prompt.buildTurnMessages(story, action),
-      maxTokens: 2600,
-      temperature: 0.82,
-      topP: 0.96,
+      maxTokens: 1200,
+      temperature: 0.78,
+      topP: 0.94,
       timeout: AI_STORY_TIMEOUT_MS,
-      jsonMode: true
+      jsonMode: true,
+      onDelta: (delta, fullText) => {
+        const preview = ai.previewTurnText(fullText);
+        if (preview && preview !== this.data.streamText) {
+          this.setData({
+            streamText: preview,
+            scrollIntoView: "streaming"
+          });
+        }
+      }
     }).then((raw) => {
       const beat = narrative.parseTurn(raw, story, action);
       if (!beat) {

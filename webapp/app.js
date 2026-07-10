@@ -3,7 +3,8 @@ const state = {
   event: null,
   story: null,
   retrospect: null,
-  loading: false
+  loading: false,
+  streamText: ""
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -18,6 +19,52 @@ async function api(path, payload = {}) {
   const data = await response.json();
   if (!response.ok || data.ok === false) throw new Error(data.error || "请求失败");
   return data;
+}
+
+async function streamTurn(payload, onDelta) {
+  const response = await fetch("/api/turn-stream", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload || {})
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || "AI 生成失败");
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finalData = null;
+
+  function handleLine(line) {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    const event = JSON.parse(trimmed);
+    if (event.type === "delta") {
+      onDelta(event.text || "");
+      return;
+    }
+    if (event.type === "done") {
+      finalData = event;
+      return;
+    }
+    if (event.type === "error") {
+      throw new Error(event.error || "AI 生成失败");
+    }
+  }
+
+  while (true) {
+    const result = await reader.read();
+    if (result.done) break;
+    buffer += decoder.decode(result.value, { stream: true });
+    const lines = buffer.split(/\r?\n/);
+    buffer = lines.pop();
+    lines.forEach(handleLine);
+  }
+  buffer += decoder.decode();
+  if (buffer.trim()) buffer.split(/\r?\n/).forEach(handleLine);
+  if (!finalData) throw new Error("AI 流式生成没有返回完整故事。");
+  return finalData;
 }
 
 function save() {
@@ -48,6 +95,55 @@ function setLoading(loading, message) {
     $("#loadingText").textContent = message || "正在生成...";
   }
   if (message && !loading) toast(message);
+}
+
+function readPartialJsonString(raw, keys) {
+  for (const key of keys) {
+    const marker = '"' + key + '"';
+    const keyIndex = raw.indexOf(marker);
+    if (keyIndex < 0) continue;
+    const colon = raw.indexOf(":", keyIndex + marker.length);
+    if (colon < 0) continue;
+    const quote = raw.indexOf('"', colon + 1);
+    if (quote < 0) continue;
+    let value = "";
+    let escaping = false;
+    for (let index = quote + 1; index < raw.length; index += 1) {
+      const char = raw[index];
+      if (escaping) {
+        if (char === "n") value += "\n";
+        else if (char === "t") value += "\t";
+        else value += char;
+        escaping = false;
+      } else if (char === "\\") {
+        escaping = true;
+      } else if (char === '"') {
+        break;
+      } else {
+        value += char;
+      }
+    }
+    if (value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function previewTurnText(raw) {
+  const text = String(raw || "");
+  try {
+    const json = JSON.parse(text);
+    const writer = json.writer || json;
+    return [
+      writer.story_text || writer.scene || writer.narrative || writer.text || writer.story,
+      writer.inner_reaction || writer.innerReaction || writer.inner,
+      writer.reality_or_temptation || writer.pressure || writer.reality_pressure
+    ].filter(Boolean).join("\n\n");
+  } catch (error) {}
+  return [
+    readPartialJsonString(text, ["story_text", "scene", "narrative", "story"]),
+    readPartialJsonString(text, ["inner_reaction", "innerReaction", "inner"]),
+    readPartialJsonString(text, ["reality_or_temptation", "pressure", "reality_pressure"])
+  ].filter(Boolean).join("\n\n");
 }
 
 function renderCharacter() {
@@ -88,6 +184,14 @@ function renderStory() {
   }
 
   empty.style.display = "none";
+  const streamBeat = state.streamText ? `
+    <article class="beat streaming-beat">
+      <div class="beat-number">...</div>
+      <p class="scene">${escapeHtml(state.streamText)}</p>
+      <div class="typing-cursor"></div>
+    </article>
+  ` : "";
+
   beats.innerHTML = state.story.beats.map(beat => `
     <article class="beat">
       <div class="beat-number">${String(beat.turn).padStart(2, "0")}.</div>
@@ -96,7 +200,7 @@ function renderStory() {
       <div class="inner-note">“${escapeHtml(beat.innerReaction)}”</div>
       <p class="pressure">${escapeHtml(beat.pressure)}</p>
     </article>
-  `).join("");
+  `).join("") + streamBeat;
 
   const latest = state.story.beats[state.story.beats.length - 1];
   $("#choices").innerHTML = (latest.choices || []).map((choice, index) => `
@@ -151,13 +255,26 @@ async function pickAiEvent() {
 
 async function chooseAction(action) {
   if (!state.story || state.loading) return;
-  setLoading(true, "正在生成下一回合...");
+  let rawStream = "";
+  state.streamText = "AI 正在续写...";
+  renderStory();
+  setLoading(true, "AI 正在写下一回合...");
   try {
-    const data = await api("/api/turn", { story: state.story, action });
+    const data = await streamTurn({ story: state.story, action }, (delta) => {
+      rawStream += delta;
+      const preview = previewTurnText(rawStream);
+      if (preview && preview !== state.streamText) {
+        state.streamText = preview;
+        renderStory();
+      }
+    });
     state.story = data.story;
+    state.streamText = "";
     renderStory();
     save();
   } catch (error) {
+    state.streamText = "";
+    renderStory();
     toast("AI 生成失败：" + (error.message || "请检查代理、Key 或模型输出。"));
   } finally {
     setLoading(false);
@@ -174,6 +291,7 @@ async function init() {
   state.event = null;
   state.story = null;
   state.retrospect = null;
+  state.streamText = "";
   renderAll();
   setStep("character");
 }
@@ -189,6 +307,7 @@ $("#aiCharacter").addEventListener("click", async () => {
     state.event = data.event;
     state.story = null;
     state.retrospect = null;
+    state.streamText = "";
     renderAll();
     save();
     toast("AI 开局已生成");
@@ -218,6 +337,7 @@ $("#aiEvent").addEventListener("click", async () => {
     await pickAiEvent();
     state.story = null;
     state.retrospect = null;
+    state.streamText = "";
     renderAll();
     save();
     toast("AI 事件已生成");
@@ -241,6 +361,7 @@ $("#startStory").addEventListener("click", async () => {
     const data = await api("/api/start", { character: state.character, event: state.event });
     state.story = data.story;
     state.retrospect = null;
+    state.streamText = "";
     renderAll();
     save();
     setStep("story");
@@ -286,6 +407,7 @@ $("#backToStory").addEventListener("click", () => setStep("story"));
 $("#restartStory").addEventListener("click", () => {
   state.story = null;
   state.retrospect = null;
+  state.streamText = "";
   localStorage.removeItem("butterfly_web_state");
   renderAll();
   setStep("character");

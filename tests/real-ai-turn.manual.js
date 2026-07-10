@@ -122,10 +122,12 @@ const sampleStory = {
       model: boot.model
     }));
 
+    const startedAt = Date.now();
     const turn = await postJson(baseUrl, "/api/turn", {
       story: sampleStory,
       action: sampleStory.beats[0].choices[1]
     });
+    console.log("turn duration ms:", Date.now() - startedAt);
     console.log("turn status:", turn.response.status);
     if (!turn.response.ok || turn.data.ok === false) {
       console.log("turn error:", turn.data.error || turn.data);

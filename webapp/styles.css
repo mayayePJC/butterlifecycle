@@ -163,6 +163,22 @@ h2 {
   line-height: 1.75;
 }
 
+.streaming-beat {
+  opacity: 0.78;
+}
+
+.streaming-beat .scene {
+  white-space: pre-line;
+}
+
+.typing-cursor {
+  width: 9px;
+  height: 18px;
+  margin-top: -8px;
+  background: rgba(74, 93, 80, 0.72);
+  animation: blink 920ms steps(2, start) infinite;
+}
+
 .control-pane {
   height: 100vh;
   position: sticky;
@@ -469,6 +485,12 @@ input {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
   }
 }
 
