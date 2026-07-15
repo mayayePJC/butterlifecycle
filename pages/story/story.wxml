@@ -3,7 +3,7 @@
 
   <view class="app-bar">
     <button class="icon-button" bindtap="goHome">×</button>
-    <text class="app-title">蝴蝶人生</text>
+    <text class="app-title">butterlife</text>
     <button class="icon-button" bindtap="goSettings">•••</button>
   </view>
 

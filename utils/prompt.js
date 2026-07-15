@@ -359,6 +359,73 @@ function buildSeedMessages() {
   ];
 }
 
+function buildProfileSeedMessages(profile) {
+  const diversity = buildSeedDiversityBrief();
+  return [
+    {
+      role: "system",
+      content: [
+        "你是《蝴蝶人生》的半真实开局生成器。",
+        "输入是一份用户通过选择题形成的双层画像：人生场域五维 + 内在能力五维。你要把它转译成一个可游玩的虚构人物和起点事件。",
+        "关键原则：保留真实受力结构，不要复刻现实隐私；人物要像用户可能人生的一种折射，而不是心理诊断、评判或建议。",
+        "人物身份可以贴近现实，也可以轻度象征化或近未来化；但不要写成名人、王族、天选主角、救世主或宏大战争。",
+        "节奏目标：一局默认 12-16 回合；开局只给出人生惯性的第一道裂缝，不要直接给出命运结论。",
+        "三个起点选项必须分别是：顺着惯性、试探偏离、押上代价；都要是可执行行动，不能是结局描述。",
+        "必须体现人生场域五维：自我、关系、资源、身体、世界。不要把五维写成裸数值，要转译成具体生活压力、欲望、牵引和代价。",
+        "也要体现内在能力五维：Agency 能动性、Courage 勇气、Clarity 清明、Resilience 韧性、Flexibility 灵活性。不要写成测评报告，要转译成她面对选择时的行动习惯、犹豫方式和承压方式。",
+        "随机创作坐标只用于增加陌生感，不能盖过半真实画像：",
+        JSON.stringify(diversity),
+        "不要输出目标形状之外的字段。句子短一点，保证 JSON 完整闭合。",
+        "只输出合法 JSON，不要 Markdown，不要解释。",
+        "字段：",
+        JSON.stringify({
+          character: {
+            title: "",
+            tagline: "",
+            identity: "",
+            summary: "",
+            inertia: [],
+            desires: [],
+            fears: [],
+            moralLine: "",
+            relationPulls: [],
+            resources: [],
+            selves: {
+              subject: "",
+              object: "",
+              material: "",
+              social: "",
+              spiritual: "",
+              pure: ""
+            }
+          },
+          event: {
+            text: "",
+            innerReaction: "",
+            pressure: "",
+            choices: [
+              { tag: "顺着惯性", text: "" },
+              { tag: "试探偏离", text: "" },
+              { tag: "押上代价", text: "" }
+            ]
+          }
+        }, null, 2),
+        "长度限制：title 4-12 字；tagline 8-18 字；summary 34-58 字；event.text 38-64 字；innerReaction 18-34 字；pressure 18-34 字；数组每项 2-10 字且 2-3 项。"
+      ].join("\n")
+    },
+    {
+      role: "user",
+      content: [
+        "请基于这份半真实画像生成《蝴蝶人生》开局。",
+        "画像：",
+        JSON.stringify(profile),
+        "",
+        "生成目标：一个虚构化但贴近画像受力结构的人物 + 一个迫使她重新排序人生的起点事件 + 3 个选择。"
+      ].join("\n")
+    }
+  ];
+}
+
 function buildEventMessages(character) {
   return [
     {
@@ -531,6 +598,7 @@ function buildRetrospectMessages(story) {
 
 module.exports = {
   buildSeedMessages,
+  buildProfileSeedMessages,
   buildCharacterMessages,
   buildEventMessages,
   buildChoiceMessages,

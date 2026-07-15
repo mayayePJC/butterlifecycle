@@ -212,6 +212,10 @@ const retrospectText = [
     assert.strictEqual(start.response.status, 200);
     assert.strictEqual(start.data.ok, true);
     assert.strictEqual(start.data.story.beats.length, 1);
+    assert.ok(start.data.story.lifeDimensions);
+    assert.ok(start.data.story.innerDimensions);
+    assert.strictEqual(start.data.story.dimensionHistory.length, 1);
+    assert.strictEqual(start.data.story.innerDimensionHistory.length, 1);
 
     const action = start.data.story.beats[0].choices[1];
     const turn = await postJson(baseUrl, "/api/turn", {
@@ -221,6 +225,8 @@ const retrospectText = [
     assert.strictEqual(turn.response.status, 200);
     assert.strictEqual(turn.data.ok, true);
     assert.strictEqual(turn.data.story.beats.length, 2);
+    assert.strictEqual(turn.data.story.dimensionHistory.length, 2);
+    assert.strictEqual(turn.data.story.innerDimensionHistory.length, 2);
     assert.strictEqual(turn.data.beat.choices.length, 3);
     assert.strictEqual(turnRequestBody.max_tokens, 1200);
     assert.strictEqual(turnRequestBody.temperature, 0.78);

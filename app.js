@@ -4,6 +4,6 @@ App({
   },
 
   globalData: {
-    productName: "蝴蝶人生"
+    productName: "butterlife"
   }
 });

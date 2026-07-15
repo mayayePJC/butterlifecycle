@@ -16,6 +16,22 @@ function makeId(prefix) {
   return prefix + "_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
 }
 
+const LIFE_DIMENSIONS = [
+  { key: "self", name: "自我" },
+  { key: "relation", name: "关系" },
+  { key: "resources", name: "资源" },
+  { key: "body", name: "身体" },
+  { key: "world", name: "世界" }
+];
+
+const INNER_DIMENSIONS = [
+  { key: "agency", name: "能动性" },
+  { key: "courage", name: "勇气" },
+  { key: "clarity", name: "清明" },
+  { key: "resilience", name: "韧性" },
+  { key: "flexibility", name: "灵活性" }
+];
+
 function getCharacterCards() {
   return constants.CHARACTER_PRESETS.slice();
 }
@@ -80,6 +96,209 @@ function normalizeChoices(choices) {
   return normalized.length >= 3 ? normalized : null;
 }
 
+function normalizeLifeDimensions(value) {
+  const source = value || {};
+  const normalized = {};
+  LIFE_DIMENSIONS.forEach(function (dimension) {
+    const raw = source[dimension.key];
+    const score = raw && typeof raw === "object" ? raw.score : raw;
+    const number = Number(score);
+    normalized[dimension.key] = {
+      name: dimension.name,
+      score: clamp(isFinite(number) ? Math.round(number) : 50, 0, 100)
+    };
+  });
+  return normalized;
+}
+
+function normalizeInnerDimensions(value) {
+  const source = value || {};
+  const normalized = {};
+  INNER_DIMENSIONS.forEach(function (dimension) {
+    const raw = source[dimension.key];
+    const score = raw && typeof raw === "object" ? raw.score : raw;
+    const number = Number(score);
+    normalized[dimension.key] = {
+      name: dimension.name,
+      score: clamp(isFinite(number) ? Math.round(number) : 50, 0, 100)
+    };
+  });
+  return normalized;
+}
+
+function deriveInitialLifeDimensions(character) {
+  const base = normalizeLifeDimensions(character && character.lifeDimensions);
+  if (character && character.lifeDimensions) return base;
+
+  const text = JSON.stringify(character || {});
+  const add = {
+    self: /自由|选择|重新|远方|作品|好奇|判断/.test(text) ? 8 : 0,
+    relation: /家|母|父|伴侣|孩子|同事|客户|关系|责任|期待|亏欠/.test(text) ? 8 : 0,
+    resources: /钱|存款|技能|证件|工具|履历|工作|收入|资源/.test(text) ? 6 : 0,
+    body: /疲惫|失眠|身体|病|伤|累|透支|睡/.test(text) ? -8 : 0,
+    world: /制度|城市|行业|规则|公司|时代|站|局|档案|审查|债/.test(text) ? 8 : 0
+  };
+
+  Object.keys(add).forEach(function (key) {
+    base[key].score = clamp(base[key].score + add[key], 0, 100);
+  });
+  return base;
+}
+
+function deriveInitialInnerDimensions(character) {
+  const base = normalizeInnerDimensions(character && character.innerDimensions);
+  if (character && character.innerDimensions) return base;
+
+  const text = JSON.stringify(character || {});
+  const add = {
+    agency: /自由|选择|决定|主动|重新|主体|拿回/.test(text) ? 8 : 0,
+    courage: /拒绝|冒险|越界|代价|押|勇敢|说出/.test(text) ? 7 : 0,
+    clarity: /判断|清楚|体感|看见|明白|整理|秩序/.test(text) ? 7 : 0,
+    resilience: /长期|撑|恢复|练习|坚持|修补|承受/.test(text) ? 6 : 0,
+    flexibility: /试探|小步|转向|机会|岔路|变化|窗口/.test(text) ? 7 : 0
+  };
+
+  if (/疲惫|失眠|透支|累|麻木/.test(text)) add.resilience -= 6;
+  if (/期待|亏欠|依赖|评价|关系/.test(text)) add.courage -= 3;
+
+  Object.keys(add).forEach(function (key) {
+    base[key].score = clamp(base[key].score + add[key], 0, 100);
+  });
+  return base;
+}
+
+function classifyActionIntent(action) {
+  const text = ((action && action.intent) || "") + " " + ((action && action.tag) || "") + " " + ((action && action.text) || "");
+  if (/return_to_inertia|顺着惯性|回到惯性|保持安全|退回|逃避|隐瞒|讨好/.test(text)) return "return";
+  if (/high_deviation|押上代价|高偏航|冒险|越界|追逐|悬疑/.test(text)) return "high";
+  return "mild";
+}
+
+function estimateLifeDimensionDelta(action, mergedDelta) {
+  const intent = classifyActionIntent(action);
+  const delta = {
+    self: 0,
+    relation: 0,
+    resources: 0,
+    body: 0,
+    world: 0
+  };
+
+  if (intent === "return") {
+    delta.self -= 2;
+    delta.relation += 2;
+    delta.resources += 2;
+    delta.body += 1;
+    delta.world -= 1;
+  } else if (intent === "high") {
+    delta.self += 5;
+    delta.relation -= 4;
+    delta.resources -= 5;
+    delta.body -= 3;
+    delta.world += 4;
+  } else {
+    delta.self += 3;
+    delta.relation -= 1;
+    delta.resources -= 1;
+    delta.body -= 1;
+    delta.world += 1;
+  }
+
+  delta.self += Math.round((mergedDelta.sedimentation || 0) * 0.35);
+  delta.resources -= Math.max(0, Math.round((mergedDelta.realityPressure || 0) * 0.18));
+  delta.body -= Math.max(0, Math.round((mergedDelta.realityPressure || 0) * 0.16));
+  delta.world += Math.round((mergedDelta.worldStrangeness || 0) * 0.5);
+
+  return delta;
+}
+
+function estimateInnerDimensionDelta(action, mergedDelta) {
+  const intent = classifyActionIntent(action);
+  const delta = {
+    agency: 0,
+    courage: 0,
+    clarity: 0,
+    resilience: 0,
+    flexibility: 0
+  };
+
+  if (intent === "return") {
+    delta.agency -= 2;
+    delta.courage -= 3;
+    delta.clarity += 1;
+    delta.resilience += 1;
+    delta.flexibility -= 1;
+  } else if (intent === "high") {
+    delta.agency += 4;
+    delta.courage += 5;
+    delta.clarity += 1;
+    delta.resilience -= 2;
+    delta.flexibility += 2;
+  } else {
+    delta.agency += 3;
+    delta.courage += 2;
+    delta.clarity += 2;
+    delta.resilience += 1;
+    delta.flexibility += 3;
+  }
+
+  delta.agency += Math.round((mergedDelta.sedimentation || 0) * 0.25);
+  delta.courage += Math.round((mergedDelta.momentDeviation || 0) * 0.2);
+  delta.clarity += Math.round((mergedDelta.sedimentation || 0) * 0.2);
+  delta.resilience += Math.round((mergedDelta.sedimentation || 0) * 0.18);
+  delta.flexibility += Math.round((mergedDelta.worldStrangeness || 0) * 0.25);
+
+  const pressure = Math.max(0, mergedDelta.realityPressure || 0);
+  delta.clarity -= Math.round(pressure * 0.08);
+  delta.resilience -= Math.round(pressure * 0.12);
+
+  return delta;
+}
+
+function applyLifeDimensionDelta(current, delta) {
+  const source = normalizeLifeDimensions(current);
+  const next = {};
+  LIFE_DIMENSIONS.forEach(function (dimension) {
+    next[dimension.key] = {
+      name: dimension.name,
+      score: clamp(source[dimension.key].score + Math.round(delta[dimension.key] || 0), 0, 100)
+    };
+  });
+  return next;
+}
+
+function applyInnerDimensionDelta(current, delta) {
+  const source = normalizeInnerDimensions(current);
+  const next = {};
+  INNER_DIMENSIONS.forEach(function (dimension) {
+    next[dimension.key] = {
+      name: dimension.name,
+      score: clamp(source[dimension.key].score + Math.round(delta[dimension.key] || 0), 0, 100)
+    };
+  });
+  return next;
+}
+
+function makeDimensionSnapshot(turn, dimensions, action, note) {
+  return {
+    turn,
+    action: action ? { tag: action.tag, text: action.text } : null,
+    values: normalizeLifeDimensions(dimensions),
+    note: note || "",
+    createdAt: Date.now()
+  };
+}
+
+function makeInnerDimensionSnapshot(turn, dimensions, action, note) {
+  return {
+    turn,
+    action: action ? { tag: action.tag, text: action.text } : null,
+    values: normalizeInnerDimensions(dimensions),
+    note: note || "",
+    createdAt: Date.now()
+  };
+}
+
 function buildInitialStory(character, event) {
   const choices = normalizeChoices(event && event.choices);
   if (!choices) {
@@ -96,6 +315,8 @@ function buildInitialStory(character, event) {
     stateNote: "开局惯性已经显形，转向尚未开始沉积。"
   };
 
+  const lifeDimensions = deriveInitialLifeDimensions(character);
+  const innerDimensions = deriveInitialInnerDimensions(character);
   return {
     id: makeId("story"),
     character,
@@ -108,6 +329,14 @@ function buildInitialStory(character, event) {
       realityPressure: 28,
       worldStrangeness: 2
     },
+    lifeDimensions,
+    innerDimensions,
+    dimensionHistory: [
+      makeDimensionSnapshot(1, lifeDimensions, null, "开局五维")
+    ],
+    innerDimensionHistory: [
+      makeInnerDimensionSnapshot(1, innerDimensions, null, "开局内在能力")
+    ],
     causalDebt: [],
     importantChoices: [],
     createdAt: Date.now(),
@@ -432,6 +661,20 @@ function appendBeat(story, actionInput, beatInput) {
   };
 
   const hiddenStatus = applyStatusDelta(story.hiddenStatus, mergedDelta);
+  const lifeDimensionDelta = estimateLifeDimensionDelta(action, mergedDelta);
+  const lifeDimensions = applyLifeDimensionDelta(story.lifeDimensions || deriveInitialLifeDimensions(story.character), lifeDimensionDelta);
+  const innerDimensionDelta = estimateInnerDimensionDelta(action, mergedDelta);
+  const innerDimensions = applyInnerDimensionDelta(story.innerDimensions || deriveInitialInnerDimensions(story.character), innerDimensionDelta);
+  const dimensionHistory = (story.dimensionHistory || [
+    makeDimensionSnapshot(1, story.lifeDimensions || deriveInitialLifeDimensions(story.character), null, "开局五维")
+  ]).concat([
+    makeDimensionSnapshot(beat.turn, lifeDimensions, action, "选择后的五维变化")
+  ]).slice(-20);
+  const innerDimensionHistory = (story.innerDimensionHistory || [
+    makeInnerDimensionSnapshot(1, story.innerDimensions || deriveInitialInnerDimensions(story.character), null, "开局内在能力")
+  ]).concat([
+    makeInnerDimensionSnapshot(beat.turn, innerDimensions, action, "选择后的内在能力变化")
+  ]).slice(-20);
   const importantChoices = story.importantChoices.slice();
   if (mergedDelta.sedimentation >= 4 || importantChoices.length === 0) {
     importantChoices.push({
@@ -475,6 +718,10 @@ function appendBeat(story, actionInput, beatInput) {
   return Object.assign({}, story, {
     beats: story.beats.concat([beat]),
     hiddenStatus,
+    lifeDimensions,
+    innerDimensions,
+    dimensionHistory,
+    innerDimensionHistory,
     importantChoices: importantChoices.slice(-6),
     causalDebt: causalDebt.slice(-6),
     openThreads: openThreads.slice(-8),

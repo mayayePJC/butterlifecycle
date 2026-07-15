@@ -4,6 +4,7 @@ const path = require("path");
 
 const narrative = require("../utils/narrative");
 const prompt = require("../utils/prompt");
+const profileQuiz = require("../utils/profileQuiz");
 
 loadEnv(path.join(__dirname, ".env"));
 loadEnv(path.join(__dirname, "..", ".env"));
@@ -42,7 +43,10 @@ function loadEnv(filePath) {
 }
 
 function sendJson(res, statusCode, body) {
-  res.writeHead(statusCode, { "content-type": "application/json; charset=utf-8" });
+  res.writeHead(statusCode, {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store"
+  });
   res.end(JSON.stringify(body));
 }
 
@@ -630,6 +634,14 @@ async function handleApi(req, res) {
     return;
   }
 
+  if (req.url === "/api/profile-quiz") {
+    sendJson(res, 200, {
+      ok: true,
+      questions: profileQuiz.publicQuestions()
+    });
+    return;
+  }
+
   if (req.url === "/api/ai-seed") {
     if (!hasUsableApiKey()) {
       sendJson(res, 400, { ok: false, error: missingKeyMessage() });
@@ -644,6 +656,33 @@ async function handleApi(req, res) {
     }, seedShape());
     const seed = normalizeAiSeed(aiPayload);
     sendJson(res, 200, { ok: true, character: seed.character, event: seed.event });
+    return;
+  }
+
+  if (req.url === "/api/profile-seed") {
+    if (!hasUsableApiKey()) {
+      sendJson(res, 400, { ok: false, error: missingKeyMessage() });
+      return;
+    }
+    let profile;
+    try {
+      profile = profileQuiz.summarizeAnswers(payload.answers || {});
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: error.message || "选择题答案不完整" });
+      return;
+    }
+    const aiPayload = await chatJson(prompt.buildProfileSeedMessages(profile), "半真实开局生成", {
+      maxTokens: 2400,
+      repairMaxTokens: 1800,
+      temperature: 0.86,
+      topP: 0.94,
+      jsonMode: true
+    }, seedShape());
+    const seed = normalizeAiSeed(aiPayload);
+    seed.character.lifeDimensions = profile.dimensions;
+    seed.character.innerDimensions = profile.innerDimensions;
+    seed.character.profileSummary = profile.summary;
+    sendJson(res, 200, { ok: true, character: seed.character, event: seed.event, profile });
     return;
   }
 
@@ -814,7 +853,10 @@ function serveStatic(req, res) {
       res.end("Not found");
       return;
     }
-    res.writeHead(200, { "content-type": MIME[path.extname(filePath)] || "application/octet-stream" });
+    res.writeHead(200, {
+      "content-type": MIME[path.extname(filePath)] || "application/octet-stream",
+      "cache-control": "no-store"
+    });
     res.end(data);
   });
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>蝴蝶人生</title>
+  <title>butterlife</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,10 +11,12 @@
     <section class="story-pane">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Butterfly Lifecycle</p>
+          <p class="eyebrow">butterlife</p>
         </div>
         <div class="status-pill" id="aiStatus">AI 未配置</div>
       </header>
+
+      <section class="dimension-radar-card" id="dimensionRadar" aria-live="polite"></section>
 
       <section class="story-paper" id="storyPaper">
         <div class="empty-state" id="emptyState">
@@ -39,14 +41,31 @@
             <button class="ghost-small" id="aiCharacter">AI 随机</button>
           </div>
         </div>
-        <article class="character-card" id="characterCard"></article>
-        <label class="field-block">
-          <span>自定义人物</span>
-          <textarea id="customCharacter" maxlength="160" placeholder="写下一个普通人的人物画像..."></textarea>
-        </label>
-        <div class="button-row">
-          <button class="ghost-button" id="useCustomCharacter">使用画像</button>
-          <button class="primary-button" id="confirmCharacter">选择她</button>
+
+        <div class="opening-mode" role="tablist" aria-label="开局方式">
+          <button class="mode-button active" data-opening-mode="ai" type="button">AI 完全模拟</button>
+          <button class="mode-button" data-opening-mode="quiz" type="button">半真实选择题</button>
+        </div>
+
+        <div class="opening-panel active" data-opening-panel="ai">
+          <article class="character-card" id="characterCard"></article>
+          <label class="field-block">
+            <span>自定义人物</span>
+            <textarea id="customCharacter" maxlength="160" placeholder="写下一个普通人的人物画像..."></textarea>
+          </label>
+          <div class="button-row">
+            <button class="ghost-button" id="useCustomCharacter">使用画像</button>
+            <button class="primary-button" id="confirmCharacter">选择她</button>
+          </div>
+        </div>
+
+        <div class="opening-panel" data-opening-panel="quiz">
+          <div class="quiz-list" id="quizQuestions"></div>
+          <article class="character-card quiz-profile" id="quizProfileCard"></article>
+          <div class="button-row">
+            <button class="ghost-button" id="resetQuiz" type="button">重选</button>
+            <button class="primary-button" id="submitQuizSeed" type="button">生成半真实开局</button>
+          </div>
         </div>
       </section>
 
@@ -75,6 +94,7 @@
             <button class="ghost-small" id="restartStory">重开</button>
           </div>
         </div>
+        <div class="ability-strip" id="abilityStrip"></div>
         <div class="choice-list" id="choices"></div>
         <form class="custom-action" id="customActionForm">
           <input id="customAction" placeholder="或者，写下你的选择...">
